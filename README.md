@@ -133,7 +133,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 👤 Author
 
-Created by Atrishman - A tool for students and educators in Computer Science.
+**Atrishman Mukherjee** - Computer Science enthusiast passionate about creating educational tools for students and educators.
 
 ## 🔗 Links
 
