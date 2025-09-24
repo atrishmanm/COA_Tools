@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Computer Organization & Architecture Tools</title>
+  <style>
+    body {
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      background: #f7fafd;
+      color: #23272f;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      min-width: 0;
+      margin: clamp(16px, 8vw, 56px) auto 0 auto;
+      background: #fff;
+      border-radius: 2.2rem;
+      box-shadow: 0 8px 32px 0 rgba(99,102,241,0.08);
+      padding: clamp(1.2rem, 5vw, 2.2rem) clamp(0.5rem, 5vw, 1.5rem) clamp(1rem, 4vw, 1.5rem) clamp(0.5rem, 5vw, 1.5rem);
+      border: 1.5px solid #e0e7ff;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .container::before,
+    .container::after {
+      display: none;
+    }
+    h1 {
+      font-size: 2.1rem;
+      font-weight: 900;
+      margin-bottom: 0.4rem;
+      color: #6366f1;
+      text-align: center;
+      letter-spacing: -1px;
+      z-index: 1;
+      position: relative;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(90deg, #6366f1 30%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8b5cf6;
+      margin-bottom: 2rem;
+      font-size: 1.08rem;
+      z-index: 1;
+      position: relative;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .tab {
+      padding: 0.5rem 1rem;
+      border: 2px solid #e0e7ff;
+      background: #f7fafd;
+      color: #6366f1;
+      border-radius: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    }
+    .tab:hover {
+      background: #e0e7ff;
+    }
+    .tab.active {
+      background: #6366f1;
+      color: #fff;
+      border-color: #6366f1;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      display: block;
+      color: #6366f1;
+      letter-spacing: 0.01em;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.85rem 1.1rem;
+      border-radius: 1.2rem;
+      border: 1.5px solid #e5eaf2;
+      margin-bottom: 1.1rem;
+      font-size: 1.08rem;
+      background: #f7fafd;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 2px 0 rgba(30,34,90,0.04);
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      border: 2px solid #6366f1;
+      outline: none;
+      background: #fff;
+      box-shadow: 0 0 0 2px #6366f133;
+    }
+    .btn {
+      width: 100%;
+      background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 1rem;
+      font-size: 1.18rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-bottom: 1.2rem;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+      box-shadow: 0 2px 12px 0 #6366f122;
+      letter-spacing: 0.01em;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      text-transform: uppercase;
+    }
+    .btn:hover {
+      background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+      box-shadow: 0 4px 24px 0 #8b5cf644;
+      transform: translateY(-2px) scale(1.04);
+    }
+    .result {
+      background: linear-gradient(90deg, #f0f0ff 0%, #eef2ff 100%);
+      border-radius: 1.2rem;
+      padding: 1.1rem;
+      margin-top: 1.1rem;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #6366f1;
+      word-break: break-all;
+      box-shadow: 0 1px 8px 0 #6366f111;
+      animation: pop 0.3s cubic-bezier(.4,2,.6,1) 1;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      border: 1px solid #e0e7ff;
+    }
+    .steps {
+      margin-top: 1.5rem;
+      background: #f7fafd;
+      border-radius: 1.2rem;
+      padding: 1.1rem;
+      font-size: 1.01rem;
+      color: #374151;
+      box-shadow: 0 2px 8px 0 #e5eaf211;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    }
+    .step {
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid #e5eaf2;
+    }
+    .step:last-child {
+      border-bottom: none;
+    }
+    .footer {
+      text-align: center;
+      color: #7b8494;
+      font-size: 1.01rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1.2rem;
+      letter-spacing: 0.01em;
+      opacity: 0.7;
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+    }
+    @media (max-width: 600px) {
+      .container {
+        max-width: 98vw;
+        margin: 0.5rem auto 0 auto;
+        padding: 1.1rem 0.5rem 1rem 0.5rem;
+        border-radius: 1.2rem;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+    @media (max-width: 400px) {
+      .container {
+        padding: 0.5rem 0.2rem 0.5rem 0.2rem;
+        border-radius: 0.7rem;
+      }
+      h1 {
+        font-size: 1.05rem;
+      }
+    }
+    input, select {
+      box-shadow: 0 1.5px 6px 0 #e5eaf208;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.95); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h1>Computer Organization & Architecture Tools</h1>
+    <div class="subtitle">Advanced Number System Converter & Educational Tools</div>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="openTab(event, 'number-converter')">Number Converter</div>
+      <div class="tab" onclick="openTab(event, 'code-converters')">Code Converters</div>
+      <div class="tab" onclick="openTab(event, 'ascii-converter')">ASCII Converter</div>
+      <div class="tab" onclick="openTab(event, 'parity-calculator')">Parity Calculator</div>
+      <div class="tab" onclick="openTab(event, 'binary-arithmetic')">Binary Arithmetic</div>
+      <div class="tab" onclick="openTab(event, 'complement-calculator')">Complements</div>
+      <div class="tab" onclick="openTab(event, 'bcd-arithmetic')">BCD Arithmetic</div>
+    </div>
+    <!-- Number Converter Tab -->
+    <div id="number-converter" class="tab-content active">
+      <form id="convertForm">
+        <label for="inputNumber">Number</label>
+        <input id="inputNumber" type="text" required placeholder="Enter number..." autocomplete="off" />
+        <label for="fromBase">From Base</label>
+        <select id="fromBase">
+          <option value="2">Binary (2)</option>
+          <option value="8">Octal (8)</option>
+          <option value="10" selected>Decimal (10)</option>
+          <option value="16">Hexadecimal (16)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="customFromBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
+        <label for="toBase">To Base</label>
+        <select id="toBase">
+          <option value="2">Binary (2)</option>
+          <option value="8">Octal (8)</option>
+          <option value="10">Decimal (10)</option>
+          <option value="16">Hexadecimal (16)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <input id="customToBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
+        <button class="btn" type="submit">Convert</button>
+      </form>
+      <div id="result" class="result" style="display:none;"></div>
+      <div id="steps" class="steps" style="display:none;"></div>
+    </div>
+
+    <!-- Code Converters Tab -->
+    <div id="code-converters" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Grey Code Converter -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Grey Code ↔ Binary</h3>
+          <label for="greyInput">Input</label>
+          <input id="greyInput" type="text" placeholder="Enter Grey code or Binary..." autocomplete="off" />
+          <label for="greyType">Input Type</label>
+          <select id="greyType">
+            <option value="grey-to-binary">Grey Code → Binary</option>
+            <option value="binary-to-grey">Binary → Grey Code</option>
+          </select>
+          <button class="btn" onclick="convertGreyCode()">Convert</button>
+          <div id="greyResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- BCD Converter -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">BCD ↔ Decimal</h3>
+          <label for="bcdInput">Input</label>
+          <input id="bcdInput" type="text" placeholder="Enter BCD or Decimal..." autocomplete="off" />
+          <label for="bcdType">Input Type</label>
+          <select id="bcdType">
+            <option value="bcd-to-decimal">BCD → Decimal</option>
+            <option value="decimal-to-bcd">Decimal → BCD</option>
+          </select>
+          <button class="btn" onclick="convertBCD()">Convert</button>
+          <div id="bcdResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Excess-3 Converter -->
+        <div style="grid-column: 1 / -1;">
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Excess-3 ↔ Binary</h3>
+          <label for="excess3Input">Input</label>
+          <input id="excess3Input" type="text" placeholder="Enter Excess-3 or Binary..." autocomplete="off" />
+          <label for="excess3Type">Input Type</label>
+          <select id="excess3Type">
+            <option value="excess3-to-binary">Excess-3 → Binary</option>
+            <option value="binary-to-excess3">Binary → Excess-3</option>
+          </select>
+          <button class="btn" onclick="convertExcess3()">Convert</button>
+          <div id="excess3Result" class="result" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASCII Converter Tab -->
+    <div id="ascii-converter" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Text ↔ ASCII</h3>
+          <label for="asciiInput">Input</label>
+          <textarea id="asciiInput" rows="4" placeholder="Enter text or ASCII codes (space-separated)..." style="resize: vertical;"></textarea>
+          <label for="asciiType">Conversion Type</label>
+          <select id="asciiType">
+            <option value="text-to-ascii">Text → ASCII Codes</option>
+            <option value="ascii-to-text">ASCII Codes → Text</option>
+          </select>
+          <button class="btn" onclick="convertASCII()">Convert</button>
+          <div id="asciiResult" class="result" style="display:none;"></div>
+        </div>
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">ASCII Table</h3>
+          <div id="asciiTable" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e7ff; border-radius: 0.5rem; padding: 0.5rem; background: #f7fafd; font-size: 0.8rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parity Calculator Tab -->
+    <div id="parity-calculator" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Parity Bit Calculator</h3>
+      <label for="parityInput">Binary Data</label>
+      <input id="parityInput" type="text" placeholder="Enter binary data (e.g., 1101)" autocomplete="off" />
+      <label for="parityType">Parity Type</label>
+      <select id="parityType">
+        <option value="even">Even Parity</option>
+        <option value="odd">Odd Parity</option>
+      </select>
+      <button class="btn" onclick="calculateParity()">Calculate Parity</button>
+      <div id="parityResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Binary Arithmetic Tab -->
+    <div id="binary-arithmetic" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Binary Arithmetic Calculator</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label for="binNum1">First Binary Number</label>
+          <input id="binNum1" type="text" placeholder="Enter binary number..." autocomplete="off" />
+        </div>
+        <div>
+          <label for="binNum2">Second Binary Number</label>
+          <input id="binNum2" type="text" placeholder="Enter binary number..." autocomplete="off" />
+        </div>
+      </div>
+      <label for="operation">Operation</label>
+      <select id="operation">
+        <option value="add">Addition (+)</option>
+        <option value="subtract">Subtraction (-)</option>
+        <option value="multiply">Multiplication (×)</option>
+        <option value="divide">Division (÷)</option>
+      </select>
+      <button class="btn" onclick="calculateBinaryArithmetic()">Calculate</button>
+      <div id="binaryArithmeticResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Complement Calculator Tab -->
+    <div id="complement-calculator" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Complement Calculator</h3>
+      <label for="complementInput">Binary Number</label>
+      <input id="complementInput" type="text" placeholder="Enter binary number..." autocomplete="off" />
+      <label for="complementType">Complement Type</label>
+      <select id="complementType">
+        <option value="ones">1's Complement</option>
+        <option value="twos">2's Complement</option>
+      </select>
+      <button class="btn" onclick="calculateComplement()">Calculate</button>
+      <div id="complementResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- BCD Arithmetic Tab -->
+    <div id="bcd-arithmetic" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">BCD Arithmetic</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label for="bcdArithNum1">First BCD Number</label>
+          <input id="bcdArithNum1" type="text" placeholder="Enter BCD number..." autocomplete="off" />
+        </div>
+        <div>
+          <label for="bcdArithNum2">Second BCD Number</label>
+          <input id="bcdArithNum2" type="text" placeholder="Enter BCD number..." autocomplete="off" />
+        </div>
+      </div>
+      <label for="bcdOperation">Operation</label>
+      <select id="bcdOperation">
+        <option value="add">BCD Addition</option>
+        <option value="subtract">BCD Subtraction</option>
+      </select>
+      <button class="btn" onclick="calculateBCDArithmetic()">Calculate</button>
+      <div id="bcdArithmeticResult" class="result" style="display:none;"></div>
+    </div>
+  </div>
+  <div class="footer">&copy; 2025 Number System Converter. Apple-inspired UI.</div>
+  <script>
+    // Tab Management
+    function openTab(evt, tabName) {
+      const tabContents = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove("active");
+      }
+      const tabs = document.getElementsByClassName("tab");
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove("active");
+      }
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+
+    // Number Converter Functions
+    function parseBase(val, customId) {
+      if (val === 'custom') {
+        const custom = document.getElementById(customId).value;
+        return parseInt(custom, 10);
+      }
+      return parseInt(val, 10);
+    }
+    function showCustomBase(selectId, inputId) {
+      const select = document.getElementById(selectId);
+      const input = document.getElementById(inputId);
+      select.addEventListener('change', function() {
+        if (this.value === 'custom') {
+          input.style.display = '';
+        } else {
+          input.style.display = 'none';
+        }
+      });
+    }
+    showCustomBase('fromBase', 'customFromBase');
+    showCustomBase('toBase', 'customToBase');
+
+    document.getElementById('convertForm').onsubmit = function(e) {
+      e.preventDefault();
+      const number = document.getElementById('inputNumber').value.trim();
+      let fromBase = parseBase(document.getElementById('fromBase').value, 'customFromBase');
+      let toBase = parseBase(document.getElementById('toBase').value, 'customToBase');
+      if (!number) return;
+      if (isNaN(fromBase) || fromBase < 2 || fromBase > 36) {
+        alert('Invalid source base!');
+        return;
+      }
+      if (isNaN(toBase) || toBase < 2 || toBase > 36) {
+        alert('Invalid target base!');
+        return;
+      }
+      try {
+        const { result, steps } = convertNumberWithSteps(number, fromBase, toBase);
+        document.getElementById('result').style.display = '';
+        document.getElementById('result').textContent = result;
+        document.getElementById('steps').style.display = '';
+        document.getElementById('steps').innerHTML = steps.map(s => `<div class="step">${s}</div>`).join('');
+      } catch (err) {
+        document.getElementById('result').style.display = '';
+        document.getElementById('result').textContent = 'Error: ' + err.message;
+        document.getElementById('steps').style.display = 'none';
+      }
+    };
+
+    function convertNumberWithSteps(number, fromBase, toBase) {
+      const DIGITS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const clean = number.replace(/^0[box]/i, '').toUpperCase();
+      // Validate input
+      for (let c of clean) {
+        if (!DIGITS.slice(0, fromBase).includes(c)) {
+          throw new Error(`Invalid digit '${c}' for base ${fromBase}`);
+        }
+      }
+      // Convert to decimal
+      let decimal = 0;
+      let steps = [];
+      if (fromBase !== 10) {
+        let sumParts = [];
+        for (let i = 0; i < clean.length; i++) {
+          const digit = DIGITS.indexOf(clean[clean.length - 1 - i]);
+          const part = `${clean[clean.length - 1 - i]} × ${fromBase}^${i} = ${digit * Math.pow(fromBase, i)}`;
+          sumParts.push(part);
+          decimal += digit * Math.pow(fromBase, i);
+        }
+        steps.push(`To Decimal: ${sumParts.join(' + ')} = <b>${decimal}</b>`);
+      } else {
+        decimal = parseInt(clean, 10);
+        steps.push(`Input is already decimal: <b>${decimal}</b>`);
+      }
+      // Convert from decimal to target base
+      if (toBase !== 10) {
+        let q = decimal;
+        let remainders = [];
+        let divSteps = [];
+        while (q > 0) {
+          let rem = q % toBase;
+          divSteps.push(`${q} ÷ ${toBase} = ${Math.floor(q/toBase)}, remainder ${rem} (${DIGITS[rem]})`);
+          remainders.unshift(DIGITS[rem]);
+          q = Math.floor(q / toBase);
+        }
+        steps.push(...divSteps);
+        steps.push(`Read remainders from bottom to top: <b>${remainders.join('')}</b>`);
+        return { result: remainders.length ? remainders.join('') : '0', steps };
+      } else {
+        return { result: decimal.toString(), steps };
+      }
+    }
+
+    // Grey Code Converter
+    function convertGreyCode() {
+      const input = document.getElementById('greyInput').value.trim();
+      const type = document.getElementById('greyType').value;
+      const result = document.getElementById('greyResult');
+      
+      if (!input) return;
+      
+      try {
+        let output, steps = [];
+        
+        if (type === 'grey-to-binary') {
+          output = greyToBinary(input);
+          steps = [`Grey Code: ${input}`, `Binary: <b>${output}</b>`];
+        } else {
+          output = binaryToGrey(input);
+          steps = [`Binary: ${input}`, `Grey Code: <b>${output}</b>`];
+        }
+        
+        result.innerHTML = steps.join('<br>');
+        result.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = 'Error: ' + err.message;
+        result.style.display = 'block';
+      }
+    }
+
+    function greyToBinary(grey) {
+      if (!/^[01]+$/.test(grey)) throw new Error('Invalid Grey code');
+      let binary = grey[0];
+      for (let i = 1; i < grey.length; i++) {
+        binary += (parseInt(binary[i-1]) ^ parseInt(grey[i])).toString();
+      }
+      return binary;
+    }
+
+    function binaryToGrey(binary) {
+      if (!/^[01]+$/.test(binary)) throw new Error('Invalid binary');
+      let grey = binary[0];
+      for (let i = 1; i < binary.length; i++) {
+        grey += (parseInt(binary[i-1]) ^ parseInt(binary[i])).toString();
+      }
+      return grey;
+    }
+
+    // BCD Converter
+    function convertBCD() {
+      const input = document.getElementById('bcdInput').value.trim();
+      const type = document.getElementById('bcdType').value;
+      const result = document.getElementById('bcdResult');
+      
+      if (!input) return;
+      
+      try {
+        let output, steps = [];
+        
+        if (type === 'bcd-to-decimal') {
+          output = bcdToDecimal(input);
+          steps = [`BCD: ${input}`, `Decimal: <b>${output}</b>`];
+        } else {
+          output = decimalToBCD(input);
+          steps = [`Decimal: ${input}`, `BCD: <b>${output}</b>`];
+        }
+        
+        result.innerHTML = steps.join('<br>');
+        result.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = 'Error: ' + err.message;
+        result.style.display = 'block';
+      }
+    }
+
+    function bcdToDecimal(bcd) {
+      if (!/^[01]+$/.test(bcd)) throw new Error('Invalid BCD');
+      if (bcd.length % 4 !== 0) throw new Error('BCD must be in groups of 4 bits');
+      
+      let decimal = '';
+      for (let i = 0; i < bcd.length; i += 4) {
+        const group = bcd.substr(i, 4);
+        const digit = parseInt(group, 2);
+        if (digit > 9) throw new Error('Invalid BCD digit: ' + group);
+        decimal += digit.toString();
+      }
+      return decimal;
+    }
+
+    function decimalToBCD(decimal) {
+      if (!/^\d+$/.test(decimal)) throw new Error('Invalid decimal number');
+      
+      let bcd = '';
+      for (let digit of decimal) {
+        const binary = parseInt(digit).toString(2).padStart(4, '0');
+        bcd += binary;
+      }
+      return bcd;
+    }
+
+    // Excess-3 Converter
+    function convertExcess3() {
+      const input = document.getElementById('excess3Input').value.trim();
+      const type = document.getElementById('excess3Type').value;
+      const result = document.getElementById('excess3Result');
+      
+      if (!input) return;
+      
+      try {
+        let output, steps = [];
+        
+        if (type === 'excess3-to-binary') {
+          output = excess3ToBinary(input);
+          steps = [`Excess-3: ${input}`, `Binary: <b>${output}</b>`];
+        } else {
+          output = binaryToExcess3(input);
+          steps = [`Binary: ${input}`, `Excess-3: <b>${output}</b>`];
+        }
+        
+        result.innerHTML = steps.join('<br>');
+        result.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = 'Error: ' + err.message;
+        result.style.display = 'block';
+      }
+    }
+
+    function excess3ToBinary(excess3) {
+      if (!/^[01]+$/.test(excess3)) throw new Error('Invalid Excess-3 code');
+      if (excess3.length % 4 !== 0) throw new Error('Excess-3 must be in groups of 4 bits');
+      
+      let binary = '';
+      for (let i = 0; i < excess3.length; i += 4) {
+        const group = excess3.substr(i, 4);
+        const digit = parseInt(group, 2) - 3;
+        if (digit < 0 || digit > 9) throw new Error('Invalid Excess-3 digit: ' + group);
+        binary += digit.toString(2).padStart(4, '0');
+      }
+      return binary;
+    }
+
+    function binaryToExcess3(binary) {
+      if (!/^[01]+$/.test(binary)) throw new Error('Invalid binary');
+      if (binary.length % 4 !== 0) throw new Error('Binary must be in groups of 4 bits');
+      
+      let excess3 = '';
+      for (let i = 0; i < binary.length; i += 4) {
+        const group = binary.substr(i, 4);
+        const digit = parseInt(group, 2) + 3;
+        if (digit > 15) throw new Error('Invalid binary digit for Excess-3: ' + group);
+        excess3 += digit.toString(2).padStart(4, '0');
+      }
+      return excess3;
+    }
+
+    // ASCII Converter
+    function convertASCII() {
+      const input = document.getElementById('asciiInput').value.trim();
+      const type = document.getElementById('asciiType').value;
+      const result = document.getElementById('asciiResult');
+      
+      if (!input) return;
+      
+      try {
+        let output, steps = [];
+        
+        if (type === 'text-to-ascii') {
+          const codes = [];
+          for (let char of input) {
+            codes.push(char.charCodeAt(0));
+          }
+          output = codes.join(' ');
+          steps = [`Text: "${input}"`, `ASCII Codes: <b>${output}</b>`];
+        } else {
+          const codes = input.split(/\s+/).map(code => parseInt(code));
+          output = codes.map(code => String.fromCharCode(code)).join('');
+          steps = [`ASCII Codes: ${input}`, `Text: "<b>${output}</b>"`];
+        }
+        
+        result.innerHTML = steps.join('<br>');
+        result.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = 'Error: ' + err.message;
+        result.style.display = 'block';
+      }
+    }
+
+    // Generate ASCII Table
+    function generateASCIITable() {
+      const table = document.getElementById('asciiTable');
+      let html = '<table style="width: 100%; font-size: 0.75rem;"><tr><th>Char</th><th>ASCII</th><th>Hex</th><th>Bin</th></tr>';
+      
+      for (let i = 32; i <= 126; i++) {
+        const char = String.fromCharCode(i);
+        const hex = i.toString(16).toUpperCase().padStart(2, '0');
+        const bin = i.toString(2).padStart(7, '0');
+        html += `<tr><td>${char}</td><td>${i}</td><td>${hex}</td><td>${bin}</td></tr>`;
+      }
+      
+      html += '</table>';
+      table.innerHTML = html;
+    }
+
+    // Parity Calculator
+    function calculateParity() {
+      const input = document.getElementById('parityInput').value.trim();
+      const type = document.getElementById('parityType').value;
+      const result = document.getElementById('parityResult');
+      
+      if (!input) return;
+      if (!/^[01]+$/.test(input)) {
+        result.innerHTML = 'Error: Invalid binary data';
+        result.style.display = 'block';
+        return;
+      }
+      
+      const ones = input.split('').filter(bit => bit === '1').length;
+      const parityBit = (type === 'even') ? (ones % 2).toString() : ((ones + 1) % 2).toString();
+      const dataWithParity = input + parityBit;
+      
+      const steps = [
+        `Data: ${input}`,
+        `Number of 1s: ${ones}`,
+        `Parity Type: ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+        `Parity Bit: <b>${parityBit}</b>`,
+        `Data with Parity: <b>${dataWithParity}</b>`
+      ];
+      
+      result.innerHTML = steps.join('<br>');
+      result.style.display = 'block';
+    }
+
+    // Binary Arithmetic Calculator
+    function calculateBinaryArithmetic() {
+      const num1 = document.getElementById('binNum1').value.trim();
+      const num2 = document.getElementById('binNum2').value.trim();
+      const op = document.getElementById('operation').value;
+      const result = document.getElementById('binaryArithmeticResult');
+      
+      if (!num1 || !num2) return;
+      if (!/^[01]+$/.test(num1) || !/^[01]+$/.test(num2)) {
+        result.innerHTML = 'Error: Invalid binary numbers';
+        result.style.display = 'block';
+        return;
+      }
+      
+      const dec1 = parseInt(num1, 2);
+      const dec2 = parseInt(num2, 2);
+      let decResult, opSymbol;
+      
+      switch(op) {
+        case 'add':
+          decResult = dec1 + dec2;
+          opSymbol = '+';
+          break;
+        case 'subtract':
+          decResult = dec1 - dec2;
+          opSymbol = '-';
+          break;
+        case 'multiply':
+          decResult = dec1 * dec2;
+          opSymbol = '×';
+          break;
+        case 'divide':
+          if (dec2 === 0) {
+            result.innerHTML = 'Error: Division by zero';
+            result.style.display = 'block';
+            return;
+          }
+          decResult = Math.floor(dec1 / dec2);
+          opSymbol = '÷';
+          break;
+      }
+      
+      const binResult = decResult.toString(2);
+      
+      const steps = [
+        `${num1} (${dec1}) ${opSymbol} ${num2} (${dec2})`,
+        `Decimal: ${dec1} ${opSymbol} ${dec2} = ${decResult}`,
+        `Binary Result: <b>${binResult}</b>`
+      ];
+      
+      result.innerHTML = steps.join('<br>');
+      result.style.display = 'block';
+    }
+
+    // Complement Calculator
+    function calculateComplement() {
+      const input = document.getElementById('complementInput').value.trim();
+      const type = document.getElementById('complementType').value;
+      const result = document.getElementById('complementResult');
+      
+      if (!input) return;
+      if (!/^[01]+$/.test(input)) {
+        result.innerHTML = 'Error: Invalid binary number';
+        result.style.display = 'block';
+        return;
+      }
+      
+      let steps = [`Original: ${input}`];
+      
+      // 1's complement
+      const onesComp = input.split('').map(bit => bit === '0' ? '1' : '0').join('');
+      steps.push(`1's Complement: ${onesComp}`);
+      
+      if (type === 'twos') {
+        // 2's complement = 1's complement + 1
+        const twosComp = (parseInt(onesComp, 2) + 1).toString(2).padStart(input.length, '0');
+        steps.push(`2's Complement: ${onesComp} + 1 = <b>${twosComp}</b>`);
+      } else {
+        steps.push(`Result: <b>${onesComp}</b>`);
+      }
+      
+      result.innerHTML = steps.join('<br>');
+      result.style.display = 'block';
+    }
+
+    // BCD Arithmetic
+    function calculateBCDArithmetic() {
+      const num1 = document.getElementById('bcdArithNum1').value.trim();
+      const num2 = document.getElementById('bcdArithNum2').value.trim();
+      const op = document.getElementById('bcdOperation').value;
+      const result = document.getElementById('bcdArithmeticResult');
+      
+      if (!num1 || !num2) return;
+      if (!/^[01]+$/.test(num1) || !/^[01]+$/.test(num2)) {
+        result.innerHTML = 'Error: Invalid BCD numbers';
+        result.style.display = 'block';
+        return;
+      }
+      
+      try {
+        const dec1 = bcdToDecimal(num1);
+        const dec2 = bcdToDecimal(num2);
+        let decResult;
+        
+        if (op === 'add') {
+          decResult = (parseInt(dec1) + parseInt(dec2)).toString();
+        } else {
+          decResult = (parseInt(dec1) - parseInt(dec2)).toString();
+          if (parseInt(decResult) < 0) {
+            result.innerHTML = 'Error: Negative result not supported in BCD';
+            result.style.display = 'block';
+            return;
+          }
+        }
+        
+        const bcdResult = decimalToBCD(decResult);
+        
+        const steps = [
+          `BCD 1: ${num1} (Decimal: ${dec1})`,
+          `BCD 2: ${num2} (Decimal: ${dec2})`,
+          `Operation: ${dec1} ${op === 'add' ? '+' : '-'} ${dec2} = ${decResult}`,
+          `BCD Result: <b>${bcdResult}</b>`
+        ];
+        
+        result.innerHTML = steps.join('<br>');
+        result.style.display = 'block';
+      } catch (err) {
+        result.innerHTML = 'Error: ' + err.message;
+        result.style.display = 'block';
+      }
+    }
+
+    // Initialize ASCII table on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      generateASCIITable();
+    });
+  </script>
+</body>
+</html>
