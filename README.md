@@ -255,7 +255,7 @@ copies or substantial portions of the Software.
 *Computer Science Student & Educational Tool Developer*
 
 [![GitHub](https://img.shields.io/badge/GitHub-atrishmanm-181717?style=flat&logo=github)](https://github.com/atrishmanm)
-[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail)](mailto:atrishman.contact@gmail.com)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail)](mailto:atrishmanm@gmail.com)
 
 </div>
 
