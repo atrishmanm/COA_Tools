@@ -26,7 +26,7 @@
       padding: clamp(1.2rem, 5vw, 2.2rem) clamp(0.5rem, 5vw, 1.5rem) clamp(1rem, 4vw, 1.5rem) clamp(0.5rem, 5vw, 1.5rem);
       border: 1.5px solid #e0e7ff;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       box-sizing: border-box;
     }
     .container::before,
@@ -86,9 +86,11 @@
     }
     .tab-content {
       display: none;
+      overflow: visible;
     }
     .tab-content.active {
       display: block;
+      overflow: visible;
     }
     label {
       font-weight: 600;
@@ -100,22 +102,80 @@
     }
     input, select {
       width: 100%;
-      padding: 0.85rem 1.1rem;
-      border-radius: 1.2rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.8rem;
       border: 1.5px solid #e5eaf2;
-      margin-bottom: 1.1rem;
-      font-size: 1.08rem;
+      margin-bottom: 0.8rem;
+      font-size: 0.9rem;
       background: #f7fafd;
       transition: border 0.2s, box-shadow 0.2s;
       box-shadow: 0 1px 2px 0 rgba(30,34,90,0.04);
       font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
       box-sizing: border-box;
+      height: auto;
+      min-height: 2.5rem;
     }
-    input:focus, select:focus {
+    
+    /* Enhanced select styling */
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      background-size: 0.8rem;
+      padding-right: 2rem;
+      appearance: none;
+      cursor: pointer;
+      height: 2.5rem;
+      line-height: 1.2;
+    }
+    
+    select option {
+      padding: 0.4rem 0.6rem;
+      background: #fff;
+      color: #374151;
+      border: none;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    
+    select option:hover, select option:focus {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+    input:focus, select:focus, textarea:focus {
       border: 2px solid #6366f1;
       outline: none;
       background: #fff;
       box-shadow: 0 0 0 2px #6366f133;
+    }
+    
+    textarea {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border-radius: 0.8rem;
+      border: 1.5px solid #e5eaf2;
+      margin-bottom: 0.8rem;
+      font-size: 0.9rem;
+      background: #f7fafd;
+      transition: border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 2px 0 rgba(30,34,90,0.04);
+      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+      box-sizing: border-box;
+      resize: vertical;
+      min-height: 3rem;
+    }
+    
+    /* Better select text alignment */
+    select {
+      text-align: left;
+      text-align-last: left;
+    }
+    
+    /* Responsive font scaling */
+    @media (max-width: 768px) {
+      input, select, textarea {
+        font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+      }
     }
     .btn {
       width: 100%;
@@ -192,6 +252,43 @@
       h1 {
         font-size: 1.3rem;
       }
+      
+      /* Compact inputs and selects for mobile */
+      input, select, textarea {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
+        border-radius: 0.5rem;
+        min-height: 2.2rem;
+      }
+      
+      textarea {
+        min-height: 2.5rem;
+        padding: 0.4rem 0.6rem;
+      }
+      
+      select {
+        background-size: 0.7rem;
+        padding-right: 1.8rem;
+        background-position: right 0.5rem center;
+        height: 2.2rem;
+        line-height: 1.1;
+      }
+      
+      label {
+        font-size: 0.85rem;
+        margin-bottom: 0.15rem;
+      }
+      
+      .tabs {
+        gap: 0.3rem;
+      }
+      
+      .tab {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.8rem;
+        border-radius: 0.6rem;
+      }
     }
     @media (max-width: 400px) {
       .container {
@@ -201,6 +298,44 @@
       h1 {
         font-size: 1.05rem;
       }
+      
+      /* Extra compact for very small screens */
+      input, select, textarea {
+        padding: 0.35rem 0.5rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.4rem;
+        border-radius: 0.4rem;
+        min-height: 2rem;
+      }
+      
+      textarea {
+        min-height: 2.2rem;
+        padding: 0.35rem 0.5rem;
+      }
+      
+      select {
+        background-size: 0.6rem;
+        padding-right: 1.6rem;
+        background-position: right 0.4rem center;
+        height: 2rem;
+        line-height: 1;
+      }
+      
+      label {
+        font-size: 0.8rem;
+        margin-bottom: 0.1rem;
+      }
+      
+      .btn {
+        padding: 0.8rem;
+        font-size: 1rem;
+        border-radius: 1rem;
+      }
+      
+      .tab {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.75rem;
+      }
     }
     input, select {
       box-shadow: 0 1.5px 6px 0 #e5eaf208;
@@ -208,6 +343,139 @@
     @keyframes pop {
       0% { transform: scale(0.95); opacity: 0.5; }
       100% { transform: scale(1); opacity: 1; }
+    }
+    /* Modern dropdown styling - clean and compact like reference */
+    .modern-dropdown {
+      position: relative;
+      width: 100%;
+      margin: 0.5rem 0;
+    }
+
+    .dropdown-selected {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      background: #f9fafb;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 2.75rem;
+      font-size: 0.9rem;
+      color: #374151;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      user-select: none;
+    }
+
+    .dropdown-selected:hover {
+      border-color: #9ca3af;
+      background: #ffffff;
+      box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .dropdown-selected:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .dropdown-list {
+      position: fixed;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.5rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      z-index: 9999;
+      display: none;
+      max-height: 300px;
+      height: auto;
+      overflow-y: auto;
+      padding: 0.25rem;
+      list-style: none;
+      margin: 0;
+      min-width: 200px;
+    }
+
+    .modern-dropdown.open .dropdown-list {
+      display: block;
+    }
+
+    .dropdown-list li {
+      padding: 0.75rem 1rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #374151;
+      transition: all 0.15s ease;
+      margin: 0.125rem 0;
+      list-style: none;
+    }
+
+    .dropdown-list li:hover {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .dropdown-list li.selected {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 500;
+    }
+
+    .selected-text {
+      color: #374151;
+      font-size: 0.9rem;
+      font-weight: 400;
+    }
+
+    .dropdown-arrow {
+      width: 14px;
+      height: 14px;
+      stroke: #6b7280;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .modern-dropdown.open .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    @media (max-width: 600px) {
+      .dropdown-selected {
+        padding: 0.65rem 0.85rem;
+        min-height: 2.5rem;
+        font-size: 0.85rem;
+      }
+      
+      .dropdown-list li {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.85rem;
+      }
+      
+      .dropdown-arrow {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .dropdown-selected {
+        padding: 0.6rem 0.75rem;
+        min-height: 2.25rem;
+        font-size: 0.8rem;
+      }
+      
+      .dropdown-list li {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.8rem;
+      }
+      
+      .dropdown-arrow {
+        width: 10px;
+        height: 10px;
+      }
     }
   </style>
     <!-- Google Fonts: Poppins -->
@@ -233,22 +501,40 @@
         <label for="inputNumber">Number</label>
         <input id="inputNumber" type="text" required placeholder="Enter number..." autocomplete="off" />
         <label for="fromBase">From Base</label>
-        <select id="fromBase">
-          <option value="2">Binary (2)</option>
-          <option value="8">Octal (8)</option>
-          <option value="10" selected>Decimal (10)</option>
-          <option value="16">Hexadecimal (16)</option>
-          <option value="custom">Custom</option>
-        </select>
+        <div class="modern-dropdown" id="fromBaseWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Decimal (10)</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="2">Binary (2)</li>
+            <li data-value="8">Octal (8)</li>
+            <li data-value="10" class="selected">Decimal (10)</li>
+            <li data-value="16">Hexadecimal (16)</li>
+            <li data-value="custom">Custom</li>
+          </ul>
+          <input type="hidden" id="fromBase" value="10">
+        </div>
         <input id="customFromBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
         <label for="toBase">To Base</label>
-        <select id="toBase">
-          <option value="2">Binary (2)</option>
-          <option value="8">Octal (8)</option>
-          <option value="10">Decimal (10)</option>
-          <option value="16">Hexadecimal (16)</option>
-          <option value="custom">Custom</option>
-        </select>
+        <div class="modern-dropdown" id="toBaseWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Binary (2)</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="2" class="selected">Binary (2)</li>
+            <li data-value="8">Octal (8)</li>
+            <li data-value="10">Decimal (10)</li>
+            <li data-value="16">Hexadecimal (16)</li>
+            <li data-value="custom">Custom</li>
+          </ul>
+          <input type="hidden" id="toBase" value="2">
+        </div>
         <input id="customToBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
         <button class="btn" type="submit">Convert</button>
       </form>
@@ -265,10 +551,19 @@
           <label for="greyInput">Input</label>
           <input id="greyInput" type="text" placeholder="Enter Grey code or Binary..." autocomplete="off" />
           <label for="greyType">Input Type</label>
-          <select id="greyType">
-            <option value="grey-to-binary">Grey Code → Binary</option>
-            <option value="binary-to-grey">Binary → Grey Code</option>
-          </select>
+          <div class="modern-dropdown" id="greyTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Grey Code → Binary</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="grey-to-binary" class="selected">Grey Code → Binary</li>
+              <li data-value="binary-to-grey">Binary → Grey Code</li>
+            </ul>
+            <input type="hidden" id="greyType" value="grey-to-binary">
+          </div>
           <button class="btn" onclick="convertGreyCode()">Convert</button>
           <div id="greyResult" class="result" style="display:none;"></div>
         </div>
@@ -279,10 +574,19 @@
           <label for="bcdInput">Input</label>
           <input id="bcdInput" type="text" placeholder="Enter BCD or Decimal..." autocomplete="off" />
           <label for="bcdType">Input Type</label>
-          <select id="bcdType">
-            <option value="bcd-to-decimal">BCD → Decimal</option>
-            <option value="decimal-to-bcd">Decimal → BCD</option>
-          </select>
+          <div class="modern-dropdown" id="bcdTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">BCD → Decimal</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="bcd-to-decimal" class="selected">BCD → Decimal</li>
+              <li data-value="decimal-to-bcd">Decimal → BCD</li>
+            </ul>
+            <input type="hidden" id="bcdType" value="bcd-to-decimal">
+          </div>
           <button class="btn" onclick="convertBCD()">Convert</button>
           <div id="bcdResult" class="result" style="display:none;"></div>
         </div>
@@ -293,10 +597,19 @@
           <label for="excess3Input">Input</label>
           <input id="excess3Input" type="text" placeholder="Enter Excess-3 or Binary..." autocomplete="off" />
           <label for="excess3Type">Input Type</label>
-          <select id="excess3Type">
-            <option value="excess3-to-binary">Excess-3 → Binary</option>
-            <option value="binary-to-excess3">Binary → Excess-3</option>
-          </select>
+          <div class="modern-dropdown" id="excess3TypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Excess-3 → Binary</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="excess3-to-binary" class="selected">Excess-3 → Binary</li>
+              <li data-value="binary-to-excess3">Binary → Excess-3</li>
+            </ul>
+            <input type="hidden" id="excess3Type" value="excess3-to-binary">
+          </div>
           <button class="btn" onclick="convertExcess3()">Convert</button>
           <div id="excess3Result" class="result" style="display:none;"></div>
         </div>
@@ -311,10 +624,19 @@
           <label for="asciiInput">Input</label>
           <textarea id="asciiInput" rows="4" placeholder="Enter text or ASCII codes (space-separated)..." style="resize: vertical;"></textarea>
           <label for="asciiType">Conversion Type</label>
-          <select id="asciiType">
-            <option value="text-to-ascii">Text → ASCII Codes</option>
-            <option value="ascii-to-text">ASCII Codes → Text</option>
-          </select>
+          <div class="modern-dropdown" id="asciiTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Text → ASCII Codes</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="text-to-ascii" class="selected">Text → ASCII Codes</li>
+              <li data-value="ascii-to-text">ASCII Codes → Text</li>
+            </ul>
+            <input type="hidden" id="asciiType" value="text-to-ascii">
+          </div>
           <button class="btn" onclick="convertASCII()">Convert</button>
           <div id="asciiResult" class="result" style="display:none;"></div>
         </div>
@@ -331,10 +653,19 @@
       <label for="parityInput">Binary Data</label>
       <input id="parityInput" type="text" placeholder="Enter binary data (e.g., 1101)" autocomplete="off" />
       <label for="parityType">Parity Type</label>
-      <select id="parityType">
-        <option value="even">Even Parity</option>
-        <option value="odd">Odd Parity</option>
-      </select>
+      <div class="modern-dropdown" id="parityTypeWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">Even Parity</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="even" class="selected">Even Parity</li>
+          <li data-value="odd">Odd Parity</li>
+        </ul>
+        <input type="hidden" id="parityType" value="even">
+      </div>
       <button class="btn" onclick="calculateParity()">Calculate Parity</button>
       <div id="parityResult" class="result" style="display:none;"></div>
     </div>
@@ -353,12 +684,21 @@
         </div>
       </div>
       <label for="operation">Operation</label>
-      <select id="operation">
-        <option value="add">Addition (+)</option>
-        <option value="subtract">Subtraction (-)</option>
-        <option value="multiply">Multiplication (×)</option>
-        <option value="divide">Division (÷)</option>
-      </select>
+      <div class="modern-dropdown" id="operationWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">Addition (+)</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="add" class="selected">Addition (+)</li>
+          <li data-value="subtract">Subtraction (-)</li>
+          <li data-value="multiply">Multiplication (×)</li>
+          <li data-value="divide">Division (÷)</li>
+        </ul>
+        <input type="hidden" id="operation" value="add">
+      </div>
       <button class="btn" onclick="calculateBinaryArithmetic()">Calculate</button>
       <div id="binaryArithmeticResult" class="result" style="display:none;"></div>
     </div>
@@ -369,10 +709,19 @@
       <label for="complementInput">Binary Number</label>
       <input id="complementInput" type="text" placeholder="Enter binary number..." autocomplete="off" />
       <label for="complementType">Complement Type</label>
-      <select id="complementType">
-        <option value="ones">1's Complement</option>
-        <option value="twos">2's Complement</option>
-      </select>
+      <div class="modern-dropdown" id="complementTypeWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">1's Complement</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="ones" class="selected">1's Complement</li>
+          <li data-value="twos">2's Complement</li>
+        </ul>
+        <input type="hidden" id="complementType" value="ones">
+      </div>
       <button class="btn" onclick="calculateComplement()">Calculate</button>
       <div id="complementResult" class="result" style="display:none;"></div>
     </div>
@@ -391,10 +740,19 @@
         </div>
       </div>
       <label for="bcdOperation">Operation</label>
-      <select id="bcdOperation">
-        <option value="add">BCD Addition</option>
-        <option value="subtract">BCD Subtraction</option>
-      </select>
+      <div class="modern-dropdown" id="bcdOperationWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">BCD Addition</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="add" class="selected">BCD Addition</li>
+          <li data-value="subtract">BCD Subtraction</li>
+        </ul>
+        <input type="hidden" id="bcdOperation" value="add">
+      </div>
       <button class="btn" onclick="calculateBCDArithmetic()">Calculate</button>
       <div id="bcdArithmeticResult" class="result" style="display:none;"></div>
     </div>
@@ -423,25 +781,17 @@
       }
       return parseInt(val, 10);
     }
-    function showCustomBase(selectId, inputId) {
-      const select = document.getElementById(selectId);
-      const input = document.getElementById(inputId);
-      select.addEventListener('change', function() {
-        if (this.value === 'custom') {
-          input.style.display = '';
-        } else {
-          input.style.display = 'none';
-        }
-      });
-    }
-    showCustomBase('fromBase', 'customFromBase');
-    showCustomBase('toBase', 'customToBase');
+    // Custom base functionality is now handled by the dropdown selection logic
 
     document.getElementById('convertForm').onsubmit = function(e) {
       e.preventDefault();
       const number = document.getElementById('inputNumber').value.trim();
-      let fromBase = parseBase(document.getElementById('fromBase').value, 'customFromBase');
-      let toBase = parseBase(document.getElementById('toBase').value, 'customToBase');
+      let fromBase = document.getElementById('fromBase').value;
+      let toBase = document.getElementById('toBase').value;
+      fromBase = fromBase === 'custom' ? document.getElementById('customFromBase').value : fromBase;
+      toBase = toBase === 'custom' ? document.getElementById('customToBase').value : toBase;
+      fromBase = parseInt(fromBase, 10);
+      toBase = parseInt(toBase, 10);
       if (!number) return;
       if (isNaN(fromBase) || fromBase < 2 || fromBase > 36) {
         alert('Invalid source base!');
@@ -869,9 +1219,183 @@
       }
     }
 
-    // Initialize ASCII table on page load
+
+
+    // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', function() {
       generateASCIITable();
+      
+      console.log('DOM loaded, initializing dropdowns...');
+      
+      // Initialize dropdowns with simple, bulletproof approach
+      function initDropdown(wrapperId) {
+        console.log('Initializing dropdown:', wrapperId);
+        
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) {
+          console.error('Wrapper not found:', wrapperId);
+          return;
+        }
+        
+        const button = wrapper.querySelector('.dropdown-selected');
+        const list = wrapper.querySelector('.dropdown-list');
+        const textSpan = wrapper.querySelector('.selected-text');
+        const hiddenInput = wrapper.querySelector('input[type="hidden"]');
+        
+        console.log('Elements found:', {
+          button: !!button,
+          list: !!list,
+          textSpan: !!textSpan,
+          hiddenInput: !!hiddenInput
+        });
+        
+        if (!button || !list || !textSpan || !hiddenInput) {
+          console.error('Missing elements in dropdown:', wrapperId);
+          return;
+        }
+        
+        // Function to position dropdown intelligently
+        function positionDropdown() {
+          if (wrapper.classList.contains('open')) {
+            // Reset styles first
+            list.style.maxHeight = '';
+            list.style.overflowY = '';
+            
+            const rect = button.getBoundingClientRect();
+            const listRect = list.getBoundingClientRect();
+            const dropdownHeight = list.scrollHeight + 20; // Add padding
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            
+            let top, left;
+            
+            // Check if dropdown fits below the button
+            if (rect.bottom + dropdownHeight <= viewportHeight - 10) {
+              // Position below
+              top = rect.bottom + 4;
+              list.style.maxHeight = 'none';
+              list.style.overflowY = 'visible';
+            } else if (rect.top - dropdownHeight >= 10) {
+              // Position above
+              top = rect.top - dropdownHeight - 4;
+              list.style.maxHeight = 'none';
+              list.style.overflowY = 'visible';
+            } else {
+              // Position below with scroll if more space below
+              if (viewportHeight - rect.bottom > rect.top) {
+                top = rect.bottom + 4;
+                list.style.maxHeight = (viewportHeight - rect.bottom - 20) + 'px';
+              } else {
+                // Position above with scroll
+                top = 10;
+                list.style.maxHeight = (rect.top - 20) + 'px';
+              }
+              list.style.overflowY = 'auto';
+            }
+            
+            // Check horizontal positioning
+            if (rect.left + rect.width <= viewportWidth - 10) {
+              left = rect.left;
+            } else {
+              left = Math.max(10, viewportWidth - rect.width - 10);
+            }
+            
+            list.style.top = top + 'px';
+            list.style.left = left + 'px';
+            list.style.width = rect.width + 'px';
+          }
+        }
+        
+        // Click to toggle dropdown
+        button.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Button clicked for:', wrapperId);
+          
+          // Close other dropdowns
+          document.querySelectorAll('.modern-dropdown').forEach(function(d) {
+            if (d !== wrapper) d.classList.remove('open');
+          });
+          
+          // Toggle this one
+          wrapper.classList.toggle('open');
+          
+          // Position dropdown after opening
+          if (wrapper.classList.contains('open')) {
+            positionDropdown();
+            
+            // Add scroll listener to reposition on scroll
+            window.addEventListener('scroll', positionDropdown);
+            window.addEventListener('resize', positionDropdown);
+          } else {
+            // Remove scroll listeners when closed
+            window.removeEventListener('scroll', positionDropdown);
+            window.removeEventListener('resize', positionDropdown);
+          }
+          
+          console.log('Dropdown is now:', wrapper.classList.contains('open') ? 'OPEN' : 'CLOSED');
+        };
+        
+        // Click on options
+        const options = list.querySelectorAll('li');
+        options.forEach(function(option) {
+          option.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const value = option.getAttribute('data-value');
+            console.log('Option clicked:', value, option.textContent);
+            
+            // Update display
+            textSpan.textContent = option.textContent;
+            hiddenInput.value = value;
+            
+            // Update selected state
+            options.forEach(function(opt) { opt.classList.remove('selected'); });
+            option.classList.add('selected');
+            
+            // Handle custom input
+            const customInputId = 'custom' + hiddenInput.id.charAt(0).toUpperCase() + hiddenInput.id.slice(1);
+            const customInput = document.getElementById(customInputId);
+            if (customInput) {
+              customInput.style.display = value === 'custom' ? 'block' : 'none';
+            }
+            
+            // Close dropdown and remove scroll listeners
+            wrapper.classList.remove('open');
+            window.removeEventListener('scroll', positionDropdown);
+            window.removeEventListener('resize', positionDropdown);
+          };
+        });
+        
+        console.log('Dropdown fully initialized:', wrapperId);
+      }
+      
+      // Initialize all dropdowns
+      initDropdown('fromBaseWrapper');
+      initDropdown('toBaseWrapper');
+      initDropdown('greyTypeWrapper');
+      initDropdown('bcdTypeWrapper');
+      initDropdown('excess3TypeWrapper');
+      initDropdown('asciiTypeWrapper');
+      initDropdown('parityTypeWrapper');
+      initDropdown('operationWrapper');
+      initDropdown('complementTypeWrapper');
+      initDropdown('bcdOperationWrapper');
+      
+      // Close dropdowns when clicking outside
+      document.onclick = function(e) {
+        if (!e.target.closest('.modern-dropdown')) {
+          document.querySelectorAll('.modern-dropdown').forEach(function(d) {
+            d.classList.remove('open');
+          });
+          // Remove all scroll listeners when closing dropdowns
+          const allDropdowns = ['fromBaseWrapper', 'toBaseWrapper', 'greyTypeWrapper', 'bcdTypeWrapper', 'excess3TypeWrapper', 'asciiTypeWrapper', 'parityTypeWrapper', 'operationWrapper', 'complementTypeWrapper', 'bcdOperationWrapper'];
+          // Note: We can't easily remove specific listeners here, but they'll be cleaned up when dropdowns are reopened
+        }
+      };
+      
+      console.log('All dropdowns initialized successfully!');
     });
   </script>
 </body>
