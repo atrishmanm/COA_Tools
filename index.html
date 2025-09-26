@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Computer Organization & Architecture Tools</title>
+  
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- External CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Computer Organization & Architecture Tools</h1>
+    <div class="subtitle">Advanced Number System Converter & Educational Tools</div>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="openTab(event, 'number-converter')">Number Converter</div>
+      <div class="tab" onclick="openTab(event, 'code-converters')">Code Converters</div>
+      <div class="tab" onclick="openTab(event, 'ascii-converter')">ASCII Converter</div>
+      <div class="tab" onclick="openTab(event, 'parity-calculator')">Parity Calculator</div>
+      <div class="tab" onclick="openTab(event, 'binary-arithmetic')">Binary Arithmetic</div>
+      <div class="tab" onclick="openTab(event, 'complement-calculator')">Complements</div>
+      <div class="tab" onclick="openTab(event, 'bcd-arithmetic')">BCD Arithmetic</div>
+    </div>
+
+    <!-- Number Converter Tab -->
+    <div id="number-converter" class="tab-content active">
+      <form id="convertForm">
+        <label for="inputNumber">Number</label>
+        <input id="inputNumber" type="text" required placeholder="Enter number..." autocomplete="off" />
+        <label for="fromBase">From Base</label>
+        <div class="modern-dropdown" id="fromBaseWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Decimal (10)</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="2">Binary (2)</li>
+            <li data-value="8">Octal (8)</li>
+            <li data-value="10" class="selected">Decimal (10)</li>
+            <li data-value="16">Hexadecimal (16)</li>
+            <li data-value="custom">Custom</li>
+          </ul>
+          <input type="hidden" id="fromBase" value="10">
+        </div>
+        <input id="customFromBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
+        <label for="toBase">To Base</label>
+        <div class="modern-dropdown" id="toBaseWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Binary (2)</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="2" class="selected">Binary (2)</li>
+            <li data-value="8">Octal (8)</li>
+            <li data-value="10">Decimal (10)</li>
+            <li data-value="16">Hexadecimal (16)</li>
+            <li data-value="custom">Custom</li>
+          </ul>
+          <input type="hidden" id="toBase" value="2">
+        </div>
+        <input id="customToBase" type="number" min="2" max="36" placeholder="Custom base (2-36)" style="display:none;" />
+        <button class="btn" type="submit">Convert</button>
+      </form>
+      <div id="result" class="result" style="display:none;"></div>
+      <div id="steps" class="steps" style="display:none;"></div>
+    </div>
+
+    <!-- Code Converters Tab -->
+    <div id="code-converters" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Grey Code Converter -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Grey Code ↔ Binary</h3>
+          <label for="greyInput">Input</label>
+          <input id="greyInput" type="text" placeholder="Enter Grey code or Binary..." autocomplete="off" />
+          <label for="greyType">Input Type</label>
+          <div class="modern-dropdown" id="greyTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Grey Code → Binary</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="grey-to-binary" class="selected">Grey Code → Binary</li>
+              <li data-value="binary-to-grey">Binary → Grey Code</li>
+            </ul>
+            <input type="hidden" id="greyType" value="grey-to-binary">
+          </div>
+          <button class="btn" onclick="convertGreyCode()">Convert</button>
+          <div id="greyResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- BCD Converter -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">BCD ↔ Decimal</h3>
+          <label for="bcdInput">Input</label>
+          <input id="bcdInput" type="text" placeholder="Enter BCD or Decimal..." autocomplete="off" />
+          <label for="bcdType">Input Type</label>
+          <div class="modern-dropdown" id="bcdTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">BCD → Decimal</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="bcd-to-decimal" class="selected">BCD → Decimal</li>
+              <li data-value="decimal-to-bcd">Decimal → BCD</li>
+            </ul>
+            <input type="hidden" id="bcdType" value="bcd-to-decimal">
+          </div>
+          <button class="btn" onclick="convertBCD()">Convert</button>
+          <div id="bcdResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Excess-3 Converter -->
+        <div style="grid-column: 1 / -1;">
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Excess-3 ↔ Binary</h3>
+          <label for="excess3Input">Input</label>
+          <input id="excess3Input" type="text" placeholder="Enter Excess-3 or Binary..." autocomplete="off" />
+          <label for="excess3Type">Input Type</label>
+          <div class="modern-dropdown" id="excess3TypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Excess-3 → Binary</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="excess3-to-binary" class="selected">Excess-3 → Binary</li>
+              <li data-value="binary-to-excess3">Binary → Excess-3</li>
+            </ul>
+            <input type="hidden" id="excess3Type" value="excess3-to-binary">
+          </div>
+          <button class="btn" onclick="convertExcess3()">Convert</button>
+          <div id="excess3Result" class="result" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASCII Converter Tab -->
+    <div id="ascii-converter" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Text ↔ ASCII</h3>
+          <label for="asciiInput">Input</label>
+          <textarea id="asciiInput" rows="4" placeholder="Enter text or ASCII codes (space-separated)..." style="resize: vertical;"></textarea>
+          <label for="asciiType">Conversion Type</label>
+          <div class="modern-dropdown" id="asciiTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Text → ASCII Codes</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="text-to-ascii" class="selected">Text → ASCII Codes</li>
+              <li data-value="ascii-to-text">ASCII Codes → Text</li>
+            </ul>
+            <input type="hidden" id="asciiType" value="text-to-ascii">
+          </div>
+          <button class="btn" onclick="convertASCII()">Convert</button>
+          <div id="asciiResult" class="result" style="display:none;"></div>
+        </div>
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">ASCII Table</h3>
+          <div id="asciiTable" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e7ff; border-radius: 0.5rem; padding: 0.5rem; background: #f7fafd; font-size: 0.8rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parity Calculator Tab -->
+    <div id="parity-calculator" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Parity Bit Calculator</h3>
+      <label for="parityInput">Binary Data</label>
+      <input id="parityInput" type="text" placeholder="Enter binary data (e.g., 1101)" autocomplete="off" />
+      <label for="parityType">Parity Type</label>
+      <div class="modern-dropdown" id="parityTypeWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">Even Parity</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="even" class="selected">Even Parity</li>
+          <li data-value="odd">Odd Parity</li>
+        </ul>
+        <input type="hidden" id="parityType" value="even">
+      </div>
+      <button class="btn" onclick="calculateParity()">Calculate Parity</button>
+      <div id="parityResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Binary Arithmetic Tab -->
+    <div id="binary-arithmetic" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Binary Arithmetic Calculator</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label for="binNum1">First Binary Number</label>
+          <input id="binNum1" type="text" placeholder="Enter binary number..." autocomplete="off" />
+        </div>
+        <div>
+          <label for="binNum2">Second Binary Number</label>
+          <input id="binNum2" type="text" placeholder="Enter binary number..." autocomplete="off" />
+        </div>
+      </div>
+      <label for="operation">Operation</label>
+      <div class="modern-dropdown" id="operationWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">Addition (+)</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="add" class="selected">Addition (+)</li>
+          <li data-value="subtract">Subtraction (-)</li>
+          <li data-value="multiply">Multiplication (×)</li>
+          <li data-value="divide">Division (÷)</li>
+        </ul>
+        <input type="hidden" id="operation" value="add">
+      </div>
+      <button class="btn" onclick="calculateBinaryArithmetic()">Calculate</button>
+      <div id="binaryArithmeticResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Complement Calculator Tab -->
+    <div id="complement-calculator" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Complement Calculator</h3>
+      <label for="complementInput">Binary Number</label>
+      <input id="complementInput" type="text" placeholder="Enter binary number..." autocomplete="off" />
+      <label for="complementType">Complement Type</label>
+      <div class="modern-dropdown" id="complementTypeWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">1's Complement</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="ones" class="selected">1's Complement</li>
+          <li data-value="twos">2's Complement</li>
+        </ul>
+        <input type="hidden" id="complementType" value="ones">
+      </div>
+      <button class="btn" onclick="calculateComplement()">Calculate</button>
+      <div id="complementResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- BCD Arithmetic Tab -->
+    <div id="bcd-arithmetic" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">BCD Arithmetic</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div>
+          <label for="bcdArithNum1">First BCD Number</label>
+          <input id="bcdArithNum1" type="text" placeholder="Enter BCD number..." autocomplete="off" />
+        </div>
+        <div>
+          <label for="bcdArithNum2">Second BCD Number</label>
+          <input id="bcdArithNum2" type="text" placeholder="Enter BCD number..." autocomplete="off" />
+        </div>
+      </div>
+      <label for="bcdOperation">Operation</label>
+      <div class="modern-dropdown" id="bcdOperationWrapper">
+        <div class="dropdown-selected" tabindex="0">
+          <span class="selected-text">BCD Addition</span>
+          <svg class="dropdown-arrow" viewBox="0 0 24 24">
+            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <ul class="dropdown-list">
+          <li data-value="add" class="selected">BCD Addition</li>
+          <li data-value="subtract">BCD Subtraction</li>
+        </ul>
+        <input type="hidden" id="bcdOperation" value="add">
+      </div>
+      <button class="btn" onclick="calculateBCDArithmetic()">Calculate</button>
+      <div id="bcdArithmeticResult" class="result" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="footer">Made with ❤️ by Atrishman Mukherjee | COA Educational Tools © 2025</div>
+
+  <!-- External JavaScript -->
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,499 @@
+/* Computer Organization & Architecture Tools - Styles */
+/* Modern, responsive design with elegant gradients and animations */
+
+body {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  background: #f7fafd;
+  color: #23272f;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  min-width: 0;
+  margin: clamp(16px, 8vw, 56px) auto 0 auto;
+  background: #fff;
+  border-radius: 2.2rem;
+  box-shadow: 0 8px 32px 0 rgba(99,102,241,0.08);
+  padding: clamp(1.2rem, 5vw, 2.2rem) clamp(0.5rem, 5vw, 1.5rem) clamp(1rem, 4vw, 1.5rem) clamp(0.5rem, 5vw, 1.5rem);
+  border: 1.5px solid #e0e7ff;
+  position: relative;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.container::before,
+.container::after {
+  display: none;
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 900;
+  margin-bottom: 0.4rem;
+  color: #6366f1;
+  text-align: center;
+  letter-spacing: -1px;
+  z-index: 1;
+  position: relative;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(90deg, #6366f1 30%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  text-align: center;
+  color: #8b5cf6;
+  margin-bottom: 2rem;
+  font-size: 1.08rem;
+  z-index: 1;
+  position: relative;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e0e7ff;
+  background: #f7fafd;
+  color: #6366f1;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+.tab:hover {
+  background: #e0e7ff;
+}
+
+.tab.active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+.tab-content {
+  display: none;
+  overflow: visible;
+}
+
+.tab-content.active {
+  display: block;
+  overflow: visible;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  display: block;
+  color: #6366f1;
+  letter-spacing: 0.01em;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid #e5eaf2;
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+  background: #f7fafd;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(30,34,90,0.04);
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  box-sizing: border-box;
+  height: auto;
+  min-height: 2.5rem;
+}
+
+/* Enhanced select styling */
+select {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 0.8rem;
+  padding-right: 2rem;
+  appearance: none;
+  cursor: pointer;
+  height: 2.5rem;
+  line-height: 1.2;
+}
+
+select option {
+  padding: 0.4rem 0.6rem;
+  background: #fff;
+  color: #374151;
+  border: none;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+select option:hover, select option:focus {
+  background: #e0e7ff;
+  color: #6366f1;
+}
+
+input:focus, select:focus, textarea:focus {
+  border: 2px solid #6366f1;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 0 0 2px #6366f133;
+}
+
+textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.8rem;
+  border: 1.5px solid #e5eaf2;
+  margin-bottom: 0.8rem;
+  font-size: 0.9rem;
+  background: #f7fafd;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(30,34,90,0.04);
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 3rem;
+}
+
+/* Better select text alignment */
+select {
+  text-align: left;
+  text-align-last: left;
+}
+
+/* Responsive font scaling */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+  }
+}
+
+.btn {
+  width: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  font-size: 1.18rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 1.2rem;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  box-shadow: 0 2px 12px 0 #6366f122;
+  letter-spacing: 0.01em;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+.btn:hover {
+  background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+  box-shadow: 0 4px 24px 0 #8b5cf644;
+  transform: translateY(-2px) scale(1.04);
+}
+
+.result {
+  background: linear-gradient(90deg, #f0f0ff 0%, #eef2ff 100%);
+  border-radius: 1.2rem;
+  padding: 1.1rem;
+  margin-top: 1.1rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6366f1;
+  word-break: break-all;
+  box-shadow: 0 1px 8px 0 #6366f111;
+  animation: pop 0.3s cubic-bezier(.4,2,.6,1) 1;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  border: 1px solid #e0e7ff;
+}
+
+.steps {
+  margin-top: 1.5rem;
+  background: #f7fafd;
+  border-radius: 1.2rem;
+  padding: 1.1rem;
+  font-size: 1.01rem;
+  color: #374151;
+  box-shadow: 0 2px 8px 0 #e5eaf211;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+.step {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+.step:last-child {
+  border-bottom: none;
+}
+
+.footer {
+  text-align: center;
+  color: #7b8494;
+  font-size: 1.01rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.01em;
+  opacity: 0.7;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+input, select {
+  box-shadow: 0 1.5px 6px 0 #e5eaf208;
+}
+
+@keyframes pop {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Modern dropdown styling - clean and compact like reference */
+.modern-dropdown {
+  position: relative;
+  width: 100%;
+  margin: 0.5rem 0;
+}
+
+.dropdown-selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 2.75rem;
+  font-size: 0.9rem;
+  color: #374151;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  user-select: none;
+}
+
+.dropdown-selected:hover {
+  border-color: #9ca3af;
+  background: #ffffff;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-selected:focus {
+  outline: none;
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.dropdown-list {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 9999;
+  display: none;
+  max-height: 300px;
+  height: auto;
+  overflow-y: auto;
+  padding: 0.25rem;
+  list-style: none;
+  margin: 0;
+  min-width: 200px;
+}
+
+.modern-dropdown.open .dropdown-list {
+  display: block;
+}
+
+.dropdown-list li {
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  transition: all 0.15s ease;
+  margin: 0.125rem 0;
+  list-style: none;
+}
+
+.dropdown-list li:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.dropdown-list li.selected {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.selected-text {
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.dropdown-arrow {
+  width: 14px;
+  height: 14px;
+  stroke: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.modern-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 600px) {
+  .container {
+    max-width: 98vw;
+    margin: 0.5rem auto 0 auto;
+    padding: 1.1rem 0.5rem 1rem 0.5rem;
+    border-radius: 1.2rem;
+  }
+  
+  h1 {
+    font-size: 1.3rem;
+  }
+  
+  /* Compact inputs and selects for mobile */
+  input, select, textarea {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.6rem;
+    border-radius: 0.5rem;
+    min-height: 2.2rem;
+  }
+  
+  textarea {
+    min-height: 2.5rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  select {
+    background-size: 0.7rem;
+    padding-right: 1.8rem;
+    background-position: right 0.5rem center;
+    height: 2.2rem;
+    line-height: 1.1;
+  }
+  
+  label {
+    font-size: 0.85rem;
+    margin-bottom: 0.15rem;
+  }
+  
+  .tabs {
+    gap: 0.3rem;
+  }
+  
+  .tab {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 0.6rem;
+  }
+  
+  .dropdown-selected {
+    padding: 0.65rem 0.85rem;
+    min-height: 2.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .dropdown-list li {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+  }
+  
+  .dropdown-arrow {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .container {
+    padding: 0.5rem 0.2rem 0.5rem 0.2rem;
+    border-radius: 0.7rem;
+  }
+  
+  h1 {
+    font-size: 1.05rem;
+  }
+  
+  /* Extra compact for very small screens */
+  input, select, textarea {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.4rem;
+    border-radius: 0.4rem;
+    min-height: 2rem;
+  }
+  
+  textarea {
+    min-height: 2.2rem;
+    padding: 0.35rem 0.5rem;
+  }
+  
+  select {
+    background-size: 0.6rem;
+    padding-right: 1.6rem;
+    background-position: right 0.4rem center;
+    height: 2rem;
+    line-height: 1;
+  }
+  
+  label {
+    font-size: 0.8rem;
+    margin-bottom: 0.1rem;
+  }
+  
+  .btn {
+    padding: 0.8rem;
+    font-size: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .tab {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .dropdown-selected {
+    padding: 0.6rem 0.75rem;
+    min-height: 2.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .dropdown-list li {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .dropdown-arrow {
+    width: 10px;
+    height: 10px;
+  }
+}

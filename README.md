@@ -1,6 +1,27 @@
 # Computer Organization & Architecture Tools
 
-A comprehensive web-based toolkit for computer science students and professionals working with number systems, binary operations, and digital logic concepts. This interactive tool provides multiple converters and calculators essential for Computer Organization & Architecture coursework.
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/atrishmanm/COA_Tools.svg)](https://github.com/atrishmanm/COA_Tools/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/atrishmanm/COA_Tools.svg)](https://github.com/atrishmanm/COA_Tools/network)
+[![GitHub issues](https://img.shields.io/github/issues/atrishmanm/COA_Tools.svg)](https://github.com/atrishmanm/COA_Tools/issues)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/atrishmanm/COA_Tools/graphs/commit-activity)
+
+A comprehensive, open-source web-based toolkit for computer science students, educators, and professionals working with number systems, binary operations, and digital logic concepts. This interactive educational tool provides multiple converters and calculators essential for Computer Organization & Architecture coursework and research.
+
+> **🎓 Educational Tool** | **📚 Academic Resource** | **💻 No Installation Required**
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Use Cases](#-use-cases)
+- [Technical Details](#️-technical-details)
+- [Features Overview](#-features-overview)
+- [Citation](#-citation)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Author & Maintainer](#-author--maintainer)
+- [Links & Resources](#-links--resources)
 
 ## 🌟 Features
 
@@ -40,21 +61,43 @@ A comprehensive web-based toolkit for computer science students and professional
 - Proper BCD arithmetic with correction factors
 - Validation of BCD format compliance
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Any modern web browser (Chrome, Firefox, Safari, Edge)
-- No additional software or installations required
+- Any modern web browser (Chrome 60+, Firefox 55+, Safari 12+, Edge 79+)
+- No additional software, plugins, or installations required
 
-### Usage
-1. Download or clone the repository
-2. Open `COA_Tools.html` in your web browser
-3. Select the desired tool from the navigation tabs
-4. Enter your input values and click the convert/calculate button
-5. View results with step-by-step explanations
+### Installation & Usage
 
-### Direct Usage
-Simply open the HTML file in any web browser - no server setup required!
+#### Method 1: Direct Download
+```bash
+# Clone the repository
+git clone https://github.com/atrishmanm/COA_Tools.git
+cd COA_Tools
+
+# Open in browser
+open index.html  # macOS
+start index.html # Windows
+xdg-open index.html # Linux
+```
+
+#### Method 2: GitHub Pages (Live Demo)
+Visit: `https://atrishmanm.github.io/COA_Tools/`
+
+#### Method 3: Download ZIP
+1. Click the green "Code" button above
+2. Select "Download ZIP"
+3. Extract and open `index.html`
+
+### File Structure
+```
+COA_Tools/
+├── index.html          # Main application file
+├── styles.css          # Styling and responsive design
+├── script.js           # Core functionality and algorithms
+├── README.md           # Documentation (this file)
+└── LICENSE             # MIT License
+```
 
 ## 💡 Use Cases
 
@@ -131,24 +174,124 @@ Feel free to contribute to this project! Some ideas:
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 👤 Author
+## � Citation
 
-**Atrishman Mukherjee** - Computer Science enthusiast passionate about creating educational tools for students and educators.
+If you use this tool in your research, teaching, or academic work, please cite it as:
 
-## 🔗 Links
+### BibTeX Citation
+```bibtex
+@software{mukherjee2025coa,
+  author       = {Atrishman Mukherjee},
+  title        = {{Computer Organization \& Architecture Tools: A Comprehensive Educational Toolkit}},
+  year         = {2025},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/atrishmanm/COA_Tools}},
+  version      = {v1.0}
+}
+```
 
-- **Live Demo**: Open `COA_Tools.html` in your browser
-- **Issues**: Report bugs or request features
-- **Documentation**: This README contains all usage information
+### APA Citation
+```
+Mukherjee, A. (2025). Computer Organization & Architecture Tools: A Comprehensive Educational Toolkit (Version 1.0) [Computer software]. GitHub. https://github.com/atrishmanm/COA_Tools
+```
+
+### IEEE Citation
+```
+A. Mukherjee, "Computer Organization & Architecture Tools: A Comprehensive Educational Toolkit," GitHub, 2025. [Online]. Available: https://github.com/atrishmanm/COA_Tools
+```
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+### Ways to Contribute
+- 🐛 **Report Bugs**: Open an issue with bug details
+- 💡 **Suggest Features**: Propose new tools or improvements
+- 📝 **Improve Documentation**: Help make instructions clearer
+- 🔧 **Submit Code**: Fork, code, and create pull requests
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Test thoroughly across browsers
+5. Commit: `git commit -am 'Add new feature'`
+6. Push: `git push origin feature-name`
+7. Submit a Pull Request
+
+### Code Style
+- Use consistent indentation (2 spaces)
+- Comment complex algorithms
+- Follow existing naming conventions
+- Ensure cross-browser compatibility
+
+## � License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2025 Atrishman Mukherjee
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
+
+## 👤 Author & Maintainer
+
+<div align="center">
+
+**Atrishman Mukherjee**
+<br>
+*Computer Science Student & Educational Tool Developer*
+
+[![GitHub](https://img.shields.io/badge/GitHub-atrishmanm-181717?style=flat&logo=github)](https://github.com/atrishmanm)
+[![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail)](mailto:atrishman.contact@gmail.com)
+
+</div>
+
+## 🔗 Links & Resources
+
+- � **Live Demo**: [GitHub Pages](https://atrishmanm.github.io/COA_Tools/)
+- 🐛 **Report Issues**: [GitHub Issues](https://github.com/atrishmanm/COA_Tools/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/atrishmanm/COA_Tools/discussions)
+- 📋 **Project Board**: [GitHub Projects](https://github.com/atrishmanm/COA_Tools/projects)
+
+## 🌟 Acknowledgments
+
+- **Inspiration**: Computer Organization & Architecture coursework
+- **Design**: Modern web design principles and Apple's Human Interface Guidelines
+- **Community**: Feedback and contributions from students and educators
+- **Libraries**: Google Fonts (Poppins), Pure HTML/CSS/JavaScript implementation
+
+## 📊 Project Stats
+
+![GitHub repo size](https://img.shields.io/github/repo-size/atrishmanm/COA_Tools)
+![GitHub code size](https://img.shields.io/github/languages/code-size/atrishmanm/COA_Tools)
+![GitHub last commit](https://img.shields.io/github/last-commit/atrishmanm/COA_Tools)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/atrishmanm/COA_Tools)
 
 ---
 
-### 📞 Support
+<div align="center">
 
-If you find this tool helpful, please consider:
-- ⭐ Starring the repository
-- 📢 Sharing with classmates and colleagues
-- 🐛 Reporting any bugs or issues
-- 💡 Suggesting new features
+### 📞 Support This Project
 
-**Happy Computing! 🚀**
+If you find this tool helpful for your studies or work, please consider:
+
+⭐ **Star this repository** | 🍴 **Fork for your own use** | 📢 **Share with others** | 🐛 **Report issues**
+
+**Made with ❤️ for the Computer Science Community**
+
+*Happy Computing! 🚀*
+
+</div>
