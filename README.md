@@ -252,7 +252,7 @@ copies or substantial portions of the Software.
 
 **Atrishman Mukherjee**
 <br>
-*Computer Science Student & Educational Tool Developer*
+*Computer Science Student*
 
 [![GitHub](https://img.shields.io/badge/GitHub-atrishmanm-181717?style=flat&logo=github)](https://github.com/atrishmanm)
 [![Email](https://img.shields.io/badge/Email-Contact-D14836?style=flat&logo=gmail)](mailto:atrishmanm@gmail.com)
