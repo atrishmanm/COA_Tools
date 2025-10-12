@@ -24,6 +24,7 @@
       <div class="tab" onclick="openTab(event, 'binary-arithmetic')">Binary Arithmetic</div>
       <div class="tab" onclick="openTab(event, 'complement-calculator')">Complements</div>
       <div class="tab" onclick="openTab(event, 'bcd-arithmetic')">BCD Arithmetic</div>
+      <div class="tab" onclick="openTab(event, '8086-stack')">8086 Stack</div>
     </div>
 
     <!-- Number Converter Tab -->
@@ -286,6 +287,213 @@
       </div>
       <button class="btn" onclick="calculateBCDArithmetic()">Calculate</button>
       <div id="bcdArithmeticResult" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- 8086 Stack Calculator Tab -->
+    <div id="8086-stack" class="tab-content">
+      <div class="stack-calculator-container">
+        <!-- Header with 8086 indicator -->
+        <div class="stack-header">
+          <div class="processor-indicator">8086</div>
+          <h3 class="stack-title">8086 STACK CALCULATOR</h3>
+          <div class="stack-subtitle">Microprocessor-Based Computing System</div>
+        </div>
+
+        <div class="stack-main-layout">
+          <!-- Top section - Calculator and Info -->
+          <div class="top-section">
+            <!-- Left side - Calculator -->
+          <div class="calculator-section">
+            <!-- System Status -->
+            <div class="connection-status">
+              <span class="status-indicator connected"></span>
+              <span class="status-text">8086 Ready</span>
+              <div class="stack-size-info">Stack Size: 
+                <span class="size-value" id="stackSizeDisplay">0</span>
+              </div>
+            </div>
+
+            <!-- Display Register -->
+            <div class="display-register">
+              <div class="register-content" id="displayRegister">0</div>
+              <button class="clear-display-btn" onclick="clearDisplay()">✓</button>
+            </div>
+
+            <!-- Stack Memory Display -->
+            <div class="stack-memory">
+              <div class="stack-header-text">
+                STACK MEMORY
+                <button class="clear-stack-btn" onclick="clearStack()">Clear Stack</button>
+              </div>
+              <div class="stack-content" id="stackContent">
+                <div class="stack-empty-message">Stack Empty</div>
+              </div>
+            </div>
+
+            <!-- Keypad -->
+            <div class="keypad">
+              <!-- Row 1 -->
+              <button class="key number-key" onclick="inputNumber('7')">7</button>
+              <button class="key number-key" onclick="inputNumber('8')">8</button>
+              <button class="key number-key" onclick="inputNumber('9')">9</button>
+              <button class="key operation-key add" onclick="inputOperation('+')">+</button>
+              <button class="key stack-key push" onclick="pushToStack()">PUSH</button>
+
+              <!-- Row 2 -->
+              <button class="key number-key" onclick="inputNumber('4')">4</button>
+              <button class="key number-key" onclick="inputNumber('5')">5</button>
+              <button class="key number-key" onclick="inputNumber('6')">6</button>
+              <button class="key operation-key subtract" onclick="inputOperation('-')">-</button>
+              <button class="key stack-key pop" onclick="popFromStack()">POP</button>
+
+              <!-- Row 3 -->
+              <button class="key number-key" onclick="inputNumber('1')">1</button>
+              <button class="key number-key" onclick="inputNumber('2')">2</button>
+              <button class="key number-key" onclick="inputNumber('3')">3</button>
+              <button class="key operation-key multiply" onclick="inputOperation('*')">×</button>
+              <button class="key stack-key peek" onclick="peekStack()">PEEK</button>
+
+              <!-- Row 4 -->
+              <button class="key clear-key" onclick="clearAll()">C</button>
+              <button class="key number-key zero" onclick="inputNumber('0')">0</button>
+              <button class="key backspace-key" onclick="backspace()">⌫</button>
+              <button class="key operation-key divide" onclick="inputOperation('/')">/</button>
+              <button class="key operation-key equals" onclick="calculateResult()">=</button>
+
+              <!-- Row 5 -->
+              <button class="key operation-key mod" onclick="inputOperation('MOD')">MOD</button>
+              <button class="key" style="background: transparent; border: none;"></button>
+              <button class="key" style="background: transparent; border: none;"></button>
+              <button class="key" style="background: transparent; border: none;"></button>
+              <button class="key" style="background: transparent; border: none;"></button>
+            </div>
+          </div>
+
+          <!-- Right side - Architecture Info -->
+          <div class="architecture-info">
+            <h4>8086 PROCESSOR STATUS</h4>
+            
+            <!-- CPU Registers -->
+            <div class="registers-section">
+              <h5>CPU REGISTERS</h5>
+              <div class="registers-grid">
+                <div class="register-item">
+                  <span class="reg-name">AX:</span>
+                  <span class="reg-value" id="regAX">0</span>
+                </div>
+                <div class="register-item">
+                  <span class="reg-name">BX:</span>
+                  <span class="reg-value" id="regBX">0</span>
+                </div>
+                <div class="register-item">
+                  <span class="reg-name">CX:</span>
+                  <span class="reg-value" id="regCX">0</span>
+                </div>
+                <div class="register-item">
+                  <span class="reg-name">DX:</span>
+                  <span class="reg-value" id="regDX">0</span>
+                </div>
+                <div class="register-item">
+                  <span class="reg-name">SP:</span>
+                  <span class="reg-value" id="regSP">50</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="info-item">
+              <div class="info-icon">🖥️</div>
+              <div class="info-content">
+                <strong>Processor:</strong> Intel 8086
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon">📊</div>
+              <div class="info-content">
+                <strong>Stack Size:</strong> 
+                <span id="stackElementCount">0/50 Elements</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon">⚙️</div>
+              <div class="info-content">
+                <strong>Operations:</strong> PUSH, POP, PEEK, Arithmetic
+              </div>
+            </div>
+
+            <div class="info-item">
+              <div class="info-icon">🔌</div>
+              <div class="info-content">
+                <strong>Interface:</strong> 
+                <span id="interfaceType">8086 Assembly</span>
+              </div>
+            </div>
+
+            <!-- Operation History -->
+            <div class="operation-history">
+              <h5>OPERATION HISTORY</h5>
+              <div class="history-content" id="operationHistory">
+                <div class="history-item">System ready</div>
+              </div>
+            </div>
+
+            </div>
+          </div>
+
+          <!-- Bottom section - Instructions -->
+          <div class="instructions-section">
+            <h4>8086 STACK OPERATIONS GUIDE</h4>
+            <div class="instructions-grid">
+              <div class="instruction-card">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h5>Enter Number</h5>
+                  <p>Input a number using the keypad (e.g., 5)</p>
+                </div>
+              </div>
+
+              <div class="instruction-card">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h5>Push to Stack</h5>
+                  <p>Press <strong>PUSH</strong> to add number to stack</p>
+                </div>
+              </div>
+
+              <div class="instruction-card">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h5>Repeat Process</h5>
+                  <p>Enter second number and <strong>PUSH</strong> again</p>
+                </div>
+              </div>
+
+              <div class="instruction-card">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                  <h5>Select Operation</h5>
+                  <p>Choose arithmetic operation (+, -, ×, /, MOD)</p>
+                </div>
+              </div>
+
+              <div class="instruction-card">
+                <div class="step-number">5</div>
+                <div class="step-content">
+                  <h5>View Result</h5>
+                  <p>Use <strong>PEEK</strong> to see result or <strong>POP</strong> to retrieve</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="footer-info">
+          Academic Project - Microprocessor & Interfacing Lab<br>
+          8086 Architecture - Stack Operations - Assembly Language
+        </div>
+      </div>
     </div>
   </div>
 

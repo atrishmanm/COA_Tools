@@ -13,6 +13,15 @@ function openTab(evt, tabName) {
   }
   document.getElementById(tabName).classList.add("active");
   evt.currentTarget.classList.add("active");
+  
+  // Initialize stack calculator when 8086 tab is opened
+  if (tabName === '8086-stack') {
+    console.log('8086 tab opened, initializing...');
+    // Add a small delay to ensure DOM elements are ready
+    setTimeout(() => {
+      initStackCalculator();
+    }, 100);
+  }
 }
 
 // Number Converter Functions
@@ -462,6 +471,382 @@ function calculateBCDArithmetic() {
   }
 }
 
+// 8086 Stack Calculator Variables and Functions
+let stackMemory = [];
+let currentDisplay = '0';
+let operationHistory = [];  // Track operations for display
+const MAX_STACK_SIZE = 50;
+
+// CPU Registers simulation
+let registers = {
+  AX: 0,    // Accumulator
+  BX: 0,    // Base
+  CX: 0,    // Counter  
+  DX: 0,    // Data
+  SP: MAX_STACK_SIZE  // Stack Pointer (starts at top)
+};
+
+// Initialize stack calculator
+function initStackCalculator() {
+  console.log('Initializing 8086 stack processor...');
+  
+  // Initialize processor state
+  stackMemory = [];
+  currentDisplay = '0';
+  operationHistory = [];
+  
+  // Reset registers
+  registers = {
+    AX: 0,
+    BX: 0, 
+    CX: 0,
+    DX: 0,
+    SP: MAX_STACK_SIZE
+  };
+  
+  updateDisplay();
+  updateStackDisplay();
+  updateStackSize();
+  updateRegistersDisplay();
+  
+  console.log('8086 processor initialized');
+}
+
+// Stack Calculator Functions
+function inputNumber(number) {
+  console.log('inputNumber called with:', number);
+  
+  if (currentDisplay === '0') {
+    currentDisplay = number;
+  } else {
+    currentDisplay += number;
+  }
+  
+  // Store in AX register for display
+  registers.AX = parseInt(currentDisplay);
+  
+  updateDisplay();
+  updateRegistersDisplay();
+  addToHistory(`Input: ${currentDisplay}`);
+  
+  console.log('Current input:', currentDisplay, 'AX:', registers.AX);
+}
+
+// Backspace function
+function backspace() {
+  console.log('Backspace called, current display:', currentDisplay);
+  
+  if (currentDisplay !== '0' && currentDisplay.length > 1) {
+    currentDisplay = currentDisplay.slice(0, -1);
+  } else {
+    currentDisplay = '0';
+  }
+  
+  // Update AX register
+  registers.AX = parseInt(currentDisplay);
+  
+  updateDisplay();
+  updateRegistersDisplay();
+  addToHistory(`Backspace: ${currentDisplay}`);
+  
+  console.log('After backspace:', currentDisplay, 'AX:', registers.AX);
+}
+
+// Make functions globally accessible
+window.inputNumber = inputNumber;
+window.backspace = backspace;
+
+function inputOperation(operation) {
+  console.log('8086 Operation:', operation);
+  
+  if (stackMemory.length < 2) {
+    addToHistory(`Error: Need 2 values on stack for ${operation}`);
+    alert(`Stack Underflow! Need at least 2 values on stack for ${operation} operation.\nCurrent stack size: ${stackMemory.length}`);
+    return;
+  }
+  
+  // POP two values from stack (8086 style)
+  const secondOperand = stackMemory.pop();  // Top of stack (second operand)
+  const firstOperand = stackMemory.pop();   // Second from top (first operand)
+  
+  // Update stack pointer
+  registers.SP += 2;
+  
+  let result;
+  let operationStr;
+  
+  // Store operands in registers for processing
+  registers.BX = firstOperand;
+  registers.CX = secondOperand;
+  
+  switch(operation) {
+    case '+':
+      result = firstOperand + secondOperand;
+      operationStr = `ADD: ${firstOperand} + ${secondOperand} = ${result}`;
+      break;
+    case '-':
+      result = firstOperand - secondOperand;
+      operationStr = `SUB: ${firstOperand} - ${secondOperand} = ${result}`;
+      break;
+    case '*':
+      result = firstOperand * secondOperand;
+      operationStr = `MUL: ${firstOperand} × ${secondOperand} = ${result}`;
+      break;
+    case 'MOD':
+      if (secondOperand === 0) {
+        stackMemory.push(firstOperand, secondOperand); // Restore stack
+        registers.SP -= 2;
+        addToHistory('Error: Division by zero');
+        alert('Division by zero error!');
+        return;
+      }
+      result = firstOperand % secondOperand;
+      operationStr = `MOD: ${firstOperand} % ${secondOperand} = ${result}`;
+      break;
+    default:
+      stackMemory.push(firstOperand, secondOperand); // Restore stack
+      registers.SP -= 2;
+      return;
+  }
+  
+  // Store result in AX and push back to stack
+  registers.AX = result;
+  stackMemory.push(result);
+  registers.SP--;
+  
+  currentDisplay = result.toString();
+  
+  updateDisplay();
+  updateStackDisplay();
+  updateStackSize();
+  updateRegistersDisplay();
+  addToHistory(operationStr);
+  
+  console.log('8086 Operation completed:', operationStr);
+}
+
+// Make functions globally accessible
+window.inputOperation = inputOperation;
+
+function calculateResult() {
+  // In 8086 mode, this just shows the top of stack
+  if (stackMemory.length === 0) {
+    addToHistory('Stack is empty');
+    alert('Stack is empty!');
+    return;
+  }
+  
+  const topValue = stackMemory[stackMemory.length - 1];
+  currentDisplay = topValue.toString();
+  registers.AX = topValue;
+  
+  updateDisplay();
+  updateRegistersDisplay();
+  addToHistory(`Display top of stack: ${topValue}`);
+  
+  console.log('Showing top of stack:', topValue);
+}
+
+// Make all calculator functions globally accessible
+window.calculateResult = calculateResult;
+
+function pushToStack() {
+  if (stackMemory.length >= MAX_STACK_SIZE) {
+    addToHistory('Stack Overflow!');
+    alert('Stack Overflow! Maximum ' + MAX_STACK_SIZE + ' elements allowed.');
+    return;
+  }
+  
+  const value = parseInt(currentDisplay);
+  if (isNaN(value)) {
+    addToHistory('Invalid number for PUSH');
+    alert('Invalid number!');
+    return;
+  }
+  
+  // 8086 PUSH operation
+  stackMemory.push(value);
+  registers.SP--;  // Stack pointer decreases (stack grows downward)
+  registers.DX = value;  // Store last pushed value in DX
+  
+  addToHistory(`PUSH ${value} → Stack`);
+  console.log('PUSH operation:', value, 'Stack size:', stackMemory.length);
+  
+  // Clear display for next input
+  currentDisplay = '0';
+  registers.AX = 0;
+  
+  updateDisplay();
+  updateStackDisplay();
+  updateStackSize();
+  updateRegistersDisplay();
+}
+
+function popFromStack() {
+  if (stackMemory.length === 0) {
+    addToHistory('Stack Underflow!');
+    alert('Stack Underflow! Stack is empty.');
+    return;
+  }
+  
+  // 8086 POP operation
+  const value = stackMemory.pop();
+  registers.SP++;  // Stack pointer increases (stack shrinks)
+  registers.AX = value;  // Store popped value in AX
+  
+  currentDisplay = value.toString();
+  
+  addToHistory(`POP ${value} ← Stack`);
+  console.log('POP operation:', value, 'Stack size:', stackMemory.length);
+  
+  updateDisplay();
+  updateStackDisplay();
+  updateStackSize();
+  updateRegistersDisplay();
+}
+
+function peekStack() {
+  if (stackMemory.length === 0) {
+    addToHistory('Stack is empty');
+    alert('Stack is empty!');
+    return;
+  }
+  
+  // 8086 PEEK operation (non-destructive read)
+  const topValue = stackMemory[stackMemory.length - 1];
+  currentDisplay = topValue.toString();
+  registers.AX = topValue;
+  
+  addToHistory(`PEEK: Top of stack = ${topValue}`);
+  console.log('PEEK operation:', topValue);
+  
+  updateDisplay();
+  updateRegistersDisplay();
+}
+
+function clearDisplay() {
+  currentDisplay = '0';
+  registers.AX = 0;
+  updateDisplay();
+  updateRegistersDisplay();
+  addToHistory('Clear display');
+}
+
+function clearStack() {
+  stackMemory = [];
+  registers.SP = MAX_STACK_SIZE;
+  operationHistory = [];
+  updateStackDisplay();
+  updateStackSize();
+  updateRegistersDisplay();
+  addToHistory('Stack cleared');
+  console.log('Stack and history cleared');
+}
+
+function clearAll() {
+  clearDisplay();
+  clearStack();
+  addToHistory('System reset');
+}
+
+function updateDisplay() {
+  console.log('updateDisplay called with:', currentDisplay);
+  const displayElement = document.getElementById('displayRegister');
+  if (displayElement) {
+    displayElement.textContent = currentDisplay;
+    console.log('Display updated successfully');
+  } else {
+    console.error('Display register element not found!');
+  }
+}
+
+function updateStackDisplay() {
+  const stackContent = document.getElementById('stackContent');
+  
+  if (!stackContent) {
+    console.error('Stack content element not found!');
+    return;
+  }
+  
+  if (stackMemory.length === 0) {
+    stackContent.innerHTML = '<div class="stack-empty-message">Stack Empty</div>';
+  } else {
+    let html = '';
+    for (let i = stackMemory.length - 1; i >= 0; i--) {
+      const isTop = i === stackMemory.length - 1;
+      html += `<div class="stack-item ${isTop ? 'stack-top' : ''}">${stackMemory[i]}</div>`;
+    }
+    stackContent.innerHTML = html;
+  }
+}
+
+function updateStackSize() {
+  const stackSizeDisplay = document.getElementById('stackSizeDisplay');
+  const stackElementCount = document.getElementById('stackElementCount');
+  
+  if (stackSizeDisplay) {
+    stackSizeDisplay.textContent = stackMemory.length;
+  } else {
+    console.error('Stack size display element not found!');
+  }
+  
+  if (stackElementCount) {
+    stackElementCount.textContent = `${stackMemory.length}/${MAX_STACK_SIZE} Elements`;
+  } else {
+    console.error('Stack element count element not found!');
+  }
+}
+
+// New function to update register display
+function updateRegistersDisplay() {
+  // Update individual register displays if they exist
+  const elements = {
+    'regAX': registers.AX,
+    'regBX': registers.BX, 
+    'regCX': registers.CX,
+    'regDX': registers.DX,
+    'regSP': registers.SP
+  };
+  
+  for (const [id, value] of Object.entries(elements)) {
+    const element = document.getElementById(id);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+  
+  console.log('Registers:', registers);
+}
+
+// Function to add operation to history
+function addToHistory(operation) {
+  operationHistory.push(`${new Date().toLocaleTimeString()}: ${operation}`);
+  
+  // Keep only last 10 operations
+  if (operationHistory.length > 10) {
+    operationHistory.shift();
+  }
+  
+  // Update history display if element exists
+  const historyElement = document.getElementById('operationHistory');
+  if (historyElement) {
+    historyElement.innerHTML = operationHistory.map(op => 
+      `<div class="history-item">${op}</div>`
+    ).join('');
+    
+    // Scroll to bottom
+    historyElement.scrollTop = historyElement.scrollHeight;
+  }
+}
+
+// Make all calculator functions globally accessible
+window.pushToStack = pushToStack;
+window.popFromStack = popFromStack;
+window.peekStack = peekStack;
+window.clearDisplay = clearDisplay;
+window.clearStack = clearStack;
+window.clearAll = clearAll;
+
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', function() {
   generateASCIITable();
@@ -637,4 +1022,11 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   
   console.log('All dropdowns initialized successfully!');
+  
+  // Initialize stack calculator variables
+  console.log('Initializing stack calculator on page load...');
+  if (typeof stackMemory === 'undefined') {
+    console.log('Stack calculator not initialized, initializing now...');
+    initStackCalculator();
+  }
 });
