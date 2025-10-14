@@ -486,6 +486,30 @@ let registers = {
   SP: MAX_STACK_SIZE  // Stack Pointer (starts at top)
 };
 
+// Flags Register simulation
+let flags = {
+  ZF: 0,    // Zero Flag
+  CF: 0,    // Carry Flag
+  SF: 0,    // Sign Flag
+  OF: 0,    // Overflow Flag
+  PF: 0,    // Parity Flag
+  AF: 0     // Auxiliary Carry Flag
+};
+
+// Performance Metrics
+let performanceMetrics = {
+  totalOperations: 0,
+  startTime: Date.now(),
+  lastOperationTime: 0
+};
+
+// Assembly Code Storage
+let assemblyCodeLines = [
+  '; 8086 Assembly Code',
+  '; Generated automatically from operations',
+  ''
+];
+
 // Initialize stack calculator
 function initStackCalculator() {
   console.log('Initializing 8086 stack processor...');
@@ -504,10 +528,38 @@ function initStackCalculator() {
     SP: MAX_STACK_SIZE
   };
   
+  // Reset flags
+  flags = {
+    ZF: 0,
+    CF: 0,
+    SF: 0,
+    OF: 0,
+    PF: 0,
+    AF: 0
+  };
+  
+  // Reset performance metrics
+  performanceMetrics = {
+    totalOperations: 0,
+    startTime: Date.now(),
+    lastOperationTime: 0
+  };
+  
+  // Reset assembly code
+  assemblyCodeLines = [
+    '; 8086 Assembly Code',
+    '; Generated automatically from operations',
+    ''
+  ];
+  
   updateDisplay();
   updateStackDisplay();
   updateStackSize();
   updateRegistersDisplay();
+  updateFlagsDisplay();
+  updatePerformanceMetrics();
+  updateAssemblyDisplay();
+  initMemoryViewer();
   
   console.log('8086 processor initialized');
 }
@@ -583,14 +635,46 @@ function inputOperation(operation) {
     case '+':
       result = firstOperand + secondOperand;
       operationStr = `ADD: ${firstOperand} + ${secondOperand} = ${result}`;
+      addAssemblyCode(`POP BX         ; BX = ${secondOperand}`);
+      addAssemblyCode(`POP AX         ; AX = ${firstOperand}`);
+      addAssemblyCode(`ADD AX, BX     ; AX = AX + BX`);
+      addAssemblyCode(`PUSH AX        ; Push result`);
+      addAssemblyCode('');
       break;
     case '-':
       result = firstOperand - secondOperand;
       operationStr = `SUB: ${firstOperand} - ${secondOperand} = ${result}`;
+      addAssemblyCode(`POP BX         ; BX = ${secondOperand}`);
+      addAssemblyCode(`POP AX         ; AX = ${firstOperand}`);
+      addAssemblyCode(`SUB AX, BX     ; AX = AX - BX`);
+      addAssemblyCode(`PUSH AX        ; Push result`);
+      addAssemblyCode('');
       break;
     case '*':
       result = firstOperand * secondOperand;
       operationStr = `MUL: ${firstOperand} × ${secondOperand} = ${result}`;
+      addAssemblyCode(`POP BX         ; BX = ${secondOperand}`);
+      addAssemblyCode(`POP AX         ; AX = ${firstOperand}`);
+      addAssemblyCode(`MUL BX         ; AX = AX * BX`);
+      addAssemblyCode(`PUSH AX        ; Push result`);
+      addAssemblyCode('');
+      break;
+    case '/':
+      if (secondOperand === 0) {
+        stackMemory.push(firstOperand, secondOperand);
+        registers.SP -= 2;
+        addToHistory('Error: Division by zero');
+        alert('Division by zero error!');
+        return;
+      }
+      result = Math.floor(firstOperand / secondOperand);
+      operationStr = `DIV: ${firstOperand} ÷ ${secondOperand} = ${result}`;
+      addAssemblyCode(`POP BX         ; BX = ${secondOperand}`);
+      addAssemblyCode(`POP AX         ; AX = ${firstOperand}`);
+      addAssemblyCode(`XOR DX, DX     ; Clear DX`);
+      addAssemblyCode(`DIV BX         ; AX = AX / BX`);
+      addAssemblyCode(`PUSH AX        ; Push result`);
+      addAssemblyCode('');
       break;
     case 'MOD':
       if (secondOperand === 0) {
@@ -602,12 +686,24 @@ function inputOperation(operation) {
       }
       result = firstOperand % secondOperand;
       operationStr = `MOD: ${firstOperand} % ${secondOperand} = ${result}`;
+      addAssemblyCode(`POP BX         ; BX = ${secondOperand}`);
+      addAssemblyCode(`POP AX         ; AX = ${firstOperand}`);
+      addAssemblyCode(`XOR DX, DX     ; Clear DX`);
+      addAssemblyCode(`DIV BX         ; AX = quotient, DX = remainder`);
+      addAssemblyCode(`PUSH DX        ; Push remainder`);
+      addAssemblyCode('');
       break;
     default:
       stackMemory.push(firstOperand, secondOperand); // Restore stack
       registers.SP -= 2;
       return;
   }
+  
+  // Update flags based on result
+  updateFlags(result, firstOperand, secondOperand, operation);
+  
+  // Update performance
+  updatePerformanceMetrics();
   
   // Store result in AX and push back to stack
   registers.AX = result;
@@ -669,6 +765,17 @@ function pushToStack() {
   registers.SP--;  // Stack pointer decreases (stack grows downward)
   registers.DX = value;  // Store last pushed value in DX
   
+  // Generate assembly code
+  addAssemblyCode(`MOV AX, ${value}    ; Load value into AX`);
+  addAssemblyCode(`PUSH AX        ; Push AX onto stack`);
+  addAssemblyCode('');
+  
+  // Update flags
+  updateFlags(value, 0, 0, '');
+  
+  // Update performance
+  updatePerformanceMetrics();
+  
   addToHistory(`PUSH ${value} → Stack`);
   console.log('PUSH operation:', value, 'Stack size:', stackMemory.length);
   
@@ -677,7 +784,7 @@ function pushToStack() {
   registers.AX = 0;
   
   updateDisplay();
-  updateStackDisplay();
+  updateStackDisplay('push');  // Add push animation
   updateStackSize();
   updateRegistersDisplay();
 }
@@ -695,6 +802,17 @@ function popFromStack() {
   registers.AX = value;  // Store popped value in AX
   
   currentDisplay = value.toString();
+  
+  // Generate assembly code
+  addAssemblyCode(`POP AX         ; Pop value from stack`);
+  addAssemblyCode(`; AX = ${value}`);
+  addAssemblyCode('');
+  
+  // Update flags
+  updateFlags(value, 0, 0, '');
+  
+  // Update performance
+  updatePerformanceMetrics();
   
   addToHistory(`POP ${value} ← Stack`);
   console.log('POP operation:', value, 'Stack size:', stackMemory.length);
@@ -721,6 +839,7 @@ function peekStack() {
   console.log('PEEK operation:', topValue);
   
   updateDisplay();
+  updateStackDisplay('peek');  // Add highlight animation
   updateRegistersDisplay();
 }
 
@@ -760,7 +879,7 @@ function updateDisplay() {
   }
 }
 
-function updateStackDisplay() {
+function updateStackDisplay(animationType = 'none') {
   const stackContent = document.getElementById('stackContent');
   
   if (!stackContent) {
@@ -774,10 +893,24 @@ function updateStackDisplay() {
     let html = '';
     for (let i = stackMemory.length - 1; i >= 0; i--) {
       const isTop = i === stackMemory.length - 1;
-      html += `<div class="stack-item ${isTop ? 'stack-top' : ''}">${stackMemory[i]}</div>`;
+      let animationClass = '';
+      
+      // Add animation class to the top item
+      if (isTop && animationType !== 'none') {
+        if (animationType === 'push') {
+          animationClass = 'push-animation';
+        } else if (animationType === 'peek') {
+          animationClass = 'highlight-animation';
+        }
+      }
+      
+      html += `<div class="stack-item ${isTop ? 'stack-top' : ''} ${animationClass}">${stackMemory[i]}</div>`;
     }
     stackContent.innerHTML = html;
   }
+  
+  // Update Memory Viewer to reflect stack changes
+  updateMemoryViewer();
 }
 
 function updateStackSize() {
@@ -791,7 +924,7 @@ function updateStackSize() {
   }
   
   if (stackElementCount) {
-    stackElementCount.textContent = `${stackMemory.length}/${MAX_STACK_SIZE} Elements`;
+    stackElementCount.textContent = `${stackMemory.length}/${MAX_STACK_SIZE}`;
   } else {
     console.error('Stack element count element not found!');
   }
@@ -816,6 +949,168 @@ function updateRegistersDisplay() {
   }
   
   console.log('Registers:', registers);
+}
+
+// Update Flags Register Display
+function updateFlagsDisplay() {
+  console.log('updateFlagsDisplay called with flags:', flags);
+  
+  const flagElements = {
+    'flagZero': flags.ZF,
+    'flagCarry': flags.CF,
+    'flagSign': flags.SF,
+    'flagOverflow': flags.OF,
+    'flagParity': flags.PF,
+    'flagAuxiliary': flags.AF
+  };
+  
+  for (const [id, value] of Object.entries(flagElements)) {
+    const element = document.getElementById(id);
+    if (element) {
+      const statusSpan = element.querySelector('.flag-status');
+      if (statusSpan) {
+        statusSpan.textContent = value;
+        console.log(`Updated ${id} to ${value}`);
+      } else {
+        console.error(`Status span not found for ${id}`);
+      }
+      // Add 'active' class if flag is set
+      if (value === 1) {
+        element.classList.add('active');
+      } else {
+        element.classList.remove('active');
+      }
+    } else {
+      console.error(`Element not found: ${id}`);
+    }
+  }
+  
+  console.log('Flags display updated');
+}
+
+// Calculate and update flags based on result
+function updateFlags(result, operand1 = 0, operand2 = 0, operation = '') {
+  console.log('updateFlags called:', { result, operand1, operand2, operation });
+  
+  // Zero Flag: Set if result is 0
+  flags.ZF = (result === 0) ? 1 : 0;
+  
+  // Sign Flag: Set if result is negative (bit 15 is 1)
+  flags.SF = (result < 0) ? 1 : 0;
+  
+  // Parity Flag: Set if number of 1 bits in lower 8 bits is even
+  const lowerByte = Math.abs(result) & 0xFF;
+  const ones = lowerByte.toString(2).split('1').length - 1;
+  flags.PF = (ones % 2 === 0) ? 1 : 0;
+  
+  // Carry Flag: Set if unsigned overflow
+  if (operation === '+') {
+    flags.CF = ((operand1 + operand2) > 65535) ? 1 : 0;
+  } else if (operation === '-') {
+    flags.CF = (operand1 < operand2) ? 1 : 0;
+  } else {
+    flags.CF = 0;
+  }
+  
+  // Overflow Flag: Set if signed overflow
+  const max16bit = 32767;
+  const min16bit = -32768;
+  flags.OF = (result > max16bit || result < min16bit) ? 1 : 0;
+  
+  // Auxiliary Carry Flag: Set if carry from bit 3 to bit 4
+  if (operation === '+') {
+    flags.AF = (((operand1 & 0xF) + (operand2 & 0xF)) > 0xF) ? 1 : 0;
+  } else if (operation === '-') {
+    flags.AF = (((operand1 & 0xF) - (operand2 & 0xF)) < 0) ? 1 : 0;
+  } else {
+    flags.AF = 0;
+  }
+  
+  console.log('Flags updated:', flags);
+  updateFlagsDisplay();
+}
+
+// Update Performance Metrics
+function updatePerformanceMetrics() {
+  performanceMetrics.totalOperations++;
+  performanceMetrics.lastOperationTime = Date.now() - performanceMetrics.startTime;
+  
+  const totalOpsElement = document.getElementById('totalOperations');
+  const stackUsageElement = document.getElementById('stackUsage');
+  const execTimeElement = document.getElementById('execTime');
+  
+  if (totalOpsElement) {
+    totalOpsElement.textContent = performanceMetrics.totalOperations;
+  }
+  
+  if (stackUsageElement) {
+    const usage = Math.round((stackMemory.length / MAX_STACK_SIZE) * 100);
+    stackUsageElement.textContent = usage + '%';
+  }
+  
+  if (execTimeElement) {
+    execTimeElement.textContent = performanceMetrics.lastOperationTime + 'ms';
+  }
+}
+
+// Add Assembly Code Line
+function addAssemblyCode(instruction) {
+  assemblyCodeLines.push(instruction);
+  
+  // Keep only last 20 lines (plus header)
+  if (assemblyCodeLines.length > 23) {
+    assemblyCodeLines = [
+      assemblyCodeLines[0],
+      assemblyCodeLines[1],
+      assemblyCodeLines[2],
+      ...assemblyCodeLines.slice(-20)
+    ];
+  }
+  
+  updateAssemblyDisplay();
+}
+
+// Update Assembly Code Display
+function updateAssemblyDisplay() {
+  const assemblyElement = document.getElementById('assemblyCode');
+  if (assemblyElement) {
+    assemblyElement.innerHTML = assemblyCodeLines.map((line, index) => {
+      let className = 'asm-line';
+      if (line.startsWith(';')) {
+        className += ' comment';
+      } else if (line.includes(':')) {
+        className += ' label';
+      } else if (line.trim().length > 0) {
+        className += ' instruction';
+      }
+      return `<div class="${className}">${line}</div>`;
+    }).join('');
+    
+    // Auto-scroll to bottom
+    assemblyElement.scrollTop = assemblyElement.scrollHeight;
+  }
+}
+
+// Copy Assembly Code to Clipboard
+function copyAssemblyCode() {
+  const codeText = assemblyCodeLines.join('\n');
+  navigator.clipboard.writeText(codeText).then(() => {
+    alert('Assembly code copied to clipboard!');
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    alert('Failed to copy assembly code');
+  });
+}
+
+// Clear Assembly Code
+function clearAssemblyCode() {
+  assemblyCodeLines = [
+    '; 8086 Assembly Code',
+    '; Generated automatically from operations',
+    ''
+  ];
+  updateAssemblyDisplay();
+  addToHistory('Assembly code cleared');
 }
 
 // Function to add operation to history
@@ -846,6 +1141,8 @@ window.peekStack = peekStack;
 window.clearDisplay = clearDisplay;
 window.clearStack = clearStack;
 window.clearAll = clearAll;
+window.copyAssemblyCode = copyAssemblyCode;
+window.clearAssemblyCode = clearAssemblyCode;
 
 // Initialize everything when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -1030,3 +1327,81 @@ document.addEventListener('DOMContentLoaded', function() {
     initStackCalculator();
   }
 });
+
+// ========================================
+// MEMORY VIEWER FUNCTIONS
+// ========================================
+
+// Initialize Memory Viewer (16 memory locations from FFFFH to FFF0H)
+function initMemoryViewer() {
+  // Simple inline grid
+  const memoryGridSimple = document.querySelector('.memory-grid-simple');
+  
+  const gridsToInit = [memoryGridSimple].filter(g => g !== null);
+  
+  gridsToInit.forEach(grid => {
+    grid.innerHTML = '';
+    
+    // Create 16 memory cells (FFFFH down to FFF0H)
+    for (let i = 0; i < 16; i++) {
+      const address = (0xFFFF - (i * 2)).toString(16).toUpperCase();
+      const memoryCell = document.createElement('div');
+      memoryCell.className = 'memory-cell';
+      memoryCell.dataset.address = address;
+      
+      memoryCell.innerHTML = `
+        <div class="memory-address">${address}H</div>
+        <div class="memory-value">----</div>
+        <div class="memory-status">Empty</div>
+      `;
+      
+      grid.appendChild(memoryCell);
+    }
+  });
+  
+  updateMemoryViewer();
+}
+
+// Update Memory Viewer to reflect current stack state
+function updateMemoryViewer() {
+  // Update simple inline grid
+  const memoryGridSimple = document.querySelector('.memory-grid-simple');
+  
+  const gridsToUpdate = [memoryGridSimple].filter(g => g !== null);
+  
+  gridsToUpdate.forEach(grid => {
+    const memoryCells = grid.querySelectorAll('.memory-cell');
+  
+  memoryCells.forEach((cell, index) => {
+    const address = cell.dataset.address;
+    const addressValue = parseInt(address, 16);
+    const valueDiv = cell.querySelector('.memory-value');
+    const statusDiv = cell.querySelector('.memory-status');
+    
+    // Calculate stack position
+    const stackIndex = Math.floor((0xFFFF - addressValue) / 2);
+    const currentSP = registers.SP;
+    const maxIndex = MAX_STACK_SIZE;
+    
+    // Reset classes
+    cell.className = 'memory-cell';
+    
+    // Check if this location contains stack data
+    if (stackIndex < stackMemory.length && stackMemory[stackIndex] !== undefined) {
+      cell.classList.add('occupied');
+      valueDiv.textContent = stackMemory[stackIndex].toString(16).toUpperCase().padStart(4, '0') + 'H';
+      statusDiv.textContent = 'Occupied';
+      
+      // Check if this is the current SP position
+      if (currentSP === (maxIndex - stackIndex)) {
+        cell.classList.remove('occupied');
+        cell.classList.add('stack-pointer');
+        statusDiv.textContent = 'SP → ' + currentSP.toString(16).toUpperCase() + 'H';
+      }
+    } else {
+      valueDiv.textContent = '----';
+      statusDiv.textContent = 'Empty';
+    }
+  });
+  }); // Close gridsToUpdate.forEach
+}

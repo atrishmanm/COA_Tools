@@ -299,7 +299,7 @@
           <div class="stack-subtitle">Microprocessor-Based Computing System</div>
         </div>
 
-        <div class="stack-main-layout">
+        <div class="stack-main-layout" id="stackMainLayout">
           <!-- Top section - Calculator and Info -->
           <div class="top-section">
             <!-- Left side - Calculator -->
@@ -400,45 +400,106 @@
               </div>
             </div>
 
-            <!-- System Info -->
-            <div class="info-item">
-              <div class="info-icon">🖥️</div>
-              <div class="info-content">
-                <strong>Processor:</strong> Intel 8086
+            <!-- Flag Registers -->
+            <div class="flags-section">
+              <h5>FLAGS REGISTER</h5>
+              <div class="flags-grid">
+                <div class="flag-item" id="flagZero">
+                  <span class="flag-name">ZF</span>
+                  <span class="flag-status">0</span>
+                </div>
+                <div class="flag-item" id="flagCarry">
+                  <span class="flag-name">CF</span>
+                  <span class="flag-status">0</span>
+                </div>
+                <div class="flag-item" id="flagSign">
+                  <span class="flag-name">SF</span>
+                  <span class="flag-status">0</span>
+                </div>
+                <div class="flag-item" id="flagOverflow">
+                  <span class="flag-name">OF</span>
+                  <span class="flag-status">0</span>
+                </div>
+                <div class="flag-item" id="flagParity">
+                  <span class="flag-name">PF</span>
+                  <span class="flag-status">0</span>
+                </div>
+                <div class="flag-item" id="flagAuxiliary">
+                  <span class="flag-name">AF</span>
+                  <span class="flag-status">0</span>
+                </div>
               </div>
             </div>
 
-            <div class="info-item">
-              <div class="info-icon">📊</div>
-              <div class="info-content">
-                <strong>Stack Size:</strong> 
-                <span id="stackElementCount">0/50 Elements</span>
+            <!-- Performance Metrics -->
+            <div class="performance-section">
+              <h5>PERFORMANCE METRICS</h5>
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <span class="metric-label">Operations:</span>
+                  <span class="metric-value" id="totalOperations">0</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Stack Usage:</span>
+                  <span class="metric-value" id="stackUsage">0%</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Stack Size:</span>
+                  <span class="metric-value" id="stackElementCount">0/50</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">Exec Time:</span>
+                  <span class="metric-value" id="execTime">0ms</span>
+                </div>
               </div>
             </div>
 
-            <div class="info-item">
-              <div class="info-icon">⚙️</div>
-              <div class="info-content">
-                <strong>Operations:</strong> PUSH, POP, PEEK, Arithmetic
+            <!-- Assembly Code Generator -->
+            <div class="assembly-section">
+              <h5>ASSEMBLY CODE
+                <button class="copy-asm-btn" onclick="copyAssemblyCode()" title="Copy Assembly Code">📋</button>
+                <button class="clear-asm-btn" onclick="clearAssemblyCode()" title="Clear Code">🗑️</button>
+              </h5>
+              <div class="assembly-code" id="assemblyCode">
+                <div class="asm-line">; 8086 Assembly Code</div>
+                <div class="asm-line">; Operations will appear here</div>
               </div>
             </div>
 
-            <div class="info-item">
-              <div class="info-icon">🔌</div>
-              <div class="info-content">
-                <strong>Interface:</strong> 
-                <span id="interfaceType">8086 Assembly</span>
-              </div>
             </div>
 
-            <!-- Operation History -->
-            <div class="operation-history">
-              <h5>OPERATION HISTORY</h5>
-              <div class="history-content" id="operationHistory">
-                <div class="history-item">System ready</div>
-              </div>
-            </div>
+          </div>
 
+          <!-- Middle section - Operation History -->
+          <div class="history-section">
+            <h4>OPERATION HISTORY</h4>
+            <div class="history-content-expanded" id="operationHistory">
+              <div class="history-item">System ready</div>
+            </div>
+          </div>
+
+          <!-- Memory Viewer Section -->
+          <div class="memory-viewer-section-inline">
+            <h4>💾 MEMORY VIEWER</h4>
+            <div class="memory-subtitle-inline">Stack Memory Visualization (FFFFH - FFF0H)</div>
+            
+            <div class="memory-grid-simple">
+              <!-- Memory cells will be dynamically generated here -->
+            </div>
+            
+            <div class="memory-legend-simple">
+              <div class="legend-item-simple">
+                <span class="legend-dot sp-dot"></span>
+                <span>Stack Pointer (SP)</span>
+              </div>
+              <div class="legend-item-simple">
+                <span class="legend-dot occupied-dot"></span>
+                <span>Occupied</span>
+              </div>
+              <div class="legend-item-simple">
+                <span class="legend-dot empty-dot"></span>
+                <span>Empty</span>
+              </div>
             </div>
           </div>
 
