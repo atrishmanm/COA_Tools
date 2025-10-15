@@ -560,6 +560,7 @@ function initStackCalculator() {
   updatePerformanceMetrics();
   updateAssemblyDisplay();
   initMemoryViewer();
+  updateSignedRepresentations();
   
   console.log('8086 processor initialized');
 }
@@ -877,6 +878,9 @@ function updateDisplay() {
   } else {
     console.error('Display register element not found!');
   }
+  
+  // Update Signed Number Representations
+  updateSignedRepresentations();
 }
 
 function updateStackDisplay(animationType = 'none') {
@@ -1305,6 +1309,9 @@ document.addEventListener('DOMContentLoaded', function() {
   initDropdown('operationWrapper');
   initDropdown('complementTypeWrapper');
   initDropdown('bcdOperationWrapper');
+  initDropdown('signMagInputTypeWrapper');
+  initDropdown('onesCompInputTypeWrapper');
+  initDropdown('twosCompInputTypeWrapper');
   
   // Close dropdowns when clicking outside
   document.onclick = function(e) {
@@ -1313,7 +1320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         d.classList.remove('open');
       });
       // Remove all scroll listeners when closing dropdowns
-      const allDropdowns = ['fromBaseWrapper', 'toBaseWrapper', 'greyTypeWrapper', 'bcdTypeWrapper', 'excess3TypeWrapper', 'asciiTypeWrapper', 'parityTypeWrapper', 'operationWrapper', 'complementTypeWrapper', 'bcdOperationWrapper'];
+      const allDropdowns = ['fromBaseWrapper', 'toBaseWrapper', 'greyTypeWrapper', 'bcdTypeWrapper', 'excess3TypeWrapper', 'asciiTypeWrapper', 'parityTypeWrapper', 'operationWrapper', 'complementTypeWrapper', 'bcdOperationWrapper', 'signMagInputTypeWrapper', 'onesCompInputTypeWrapper', 'twosCompInputTypeWrapper'];
       // Note: We can't easily remove specific listeners here, but they'll be cleaned up when dropdowns are reopened
     }
   };
@@ -1404,4 +1411,494 @@ function updateMemoryViewer() {
     }
   });
   }); // Close gridsToUpdate.forEach
+}
+
+// ========================================
+// SIGNED NUMBER REPRESENTATIONS FUNCTIONS
+// ========================================
+
+// Convert decimal to Sign-Magnitude (8-bit)
+function toSignMagnitude(decimal) {
+  if (decimal === 0) return '0000 0000';
+  
+  const isNegative = decimal < 0;
+  const magnitude = Math.abs(decimal);
+  
+  if (magnitude > 127) return 'Overflow';
+  
+  let binary = magnitude.toString(2).padStart(7, '0');
+  let signBit = isNegative ? '1' : '0';
+  
+  let result = signBit + binary;
+  return result.slice(0, 4) + ' ' + result.slice(4);
+}
+
+// Convert decimal to 1's Complement (8-bit)
+function toOnesComplement(decimal) {
+  if (decimal === 0) return '0000 0000';
+  
+  if (decimal > 127 || decimal < -127) return 'Overflow';
+  
+  if (decimal > 0) {
+    let binary = decimal.toString(2).padStart(8, '0');
+    return binary.slice(0, 4) + ' ' + binary.slice(4);
+  } else {
+    // Negative: invert all bits of positive
+    let positive = Math.abs(decimal).toString(2).padStart(8, '0');
+    let inverted = '';
+    for (let bit of positive) {
+      inverted += bit === '0' ? '1' : '0';
+    }
+    return inverted.slice(0, 4) + ' ' + inverted.slice(4);
+  }
+}
+
+// Convert decimal to 2's Complement (8-bit)
+function toTwosComplement(decimal) {
+  if (decimal > 127 || decimal < -128) return 'Overflow';
+  
+  if (decimal >= 0) {
+    let binary = decimal.toString(2).padStart(8, '0');
+    return binary.slice(0, 4) + ' ' + binary.slice(4);
+  } else {
+    // Negative: invert bits and add 1
+    let positive = Math.abs(decimal).toString(2).padStart(8, '0');
+    let inverted = '';
+    for (let bit of positive) {
+      inverted += bit === '0' ? '1' : '0';
+    }
+    
+    // Add 1
+    let carry = 1;
+    let result = '';
+    for (let i = 7; i >= 0; i--) {
+      let sum = parseInt(inverted[i]) + carry;
+      result = (sum % 2) + result;
+      carry = Math.floor(sum / 2);
+    }
+    
+    return result.slice(0, 4) + ' ' + result.slice(4);
+  }
+}
+
+// Update Signed Number Representations display (for 8086 tab - simple version)
+function updateSignedRepresentations() {
+  const value = parseInt(currentDisplay) || 0;
+  
+  // Update Sign-Magnitude
+  const signMagSection = document.getElementById('signMagnitudeValue');
+  if (signMagSection) {
+    signMagSection.querySelector('.value-display').textContent = toSignMagnitude(value);
+    signMagSection.querySelector('.value-display-dec').textContent = value;
+  }
+  
+  // Update 1's Complement
+  const onesCompSection = document.getElementById('onesComplementValue');
+  if (onesCompSection) {
+    onesCompSection.querySelector('.value-display').textContent = toOnesComplement(value);
+    onesCompSection.querySelector('.value-display-dec').textContent = value;
+  }
+  
+  // Update 2's Complement
+  const twosCompSection = document.getElementById('twosComplementValue');
+  if (twosCompSection) {
+    twosCompSection.querySelector('.value-display').textContent = toTwosComplement(value);
+    twosCompSection.querySelector('.value-display-dec').textContent = value;
+  }
+}
+
+// Sign-Magnitude Converter
+function convertSignMagnitude() {
+  const input = document.getElementById('signMagInput');
+  const inputType = document.getElementById('signMagInputType').value;
+  const inputValue = input.value.trim();
+  
+  if (!inputValue) {
+    alert('Please enter a value');
+    return;
+  }
+  
+  let value, result, isNegative, absValue, magnitude7bit, signBit;
+  
+  if (inputType === 'decimal') {
+    // Input is decimal
+    value = parseInt(inputValue);
+    if (isNaN(value) || value < -127 || value > 127) {
+      alert('Please enter a valid number between -127 and 127');
+      return;
+    }
+    
+    isNegative = value < 0;
+    absValue = Math.abs(value);
+    magnitude7bit = absValue.toString(2).padStart(7, '0');
+    signBit = isNegative ? '1' : '0';
+    result = signBit + magnitude7bit;
+  } else {
+    // Input is binary
+    const binary = inputValue.replace(/\s/g, '');
+    if (!/^[01]{8}$/.test(binary)) {
+      alert('Please enter a valid 8-bit binary number (e.g., 10000101)');
+      return;
+    }
+    
+    signBit = binary[0];
+    magnitude7bit = binary.slice(1);
+    isNegative = signBit === '1';
+    absValue = parseInt(magnitude7bit, 2);
+    value = isNegative ? -absValue : absValue;
+    result = binary;
+  }
+  
+  // Display result
+  const resultDiv = document.getElementById('signMagResult');
+  resultDiv.innerHTML = `
+    <div style="font-size: 1.25rem; font-weight: 700; color: #6366f1; font-family: 'Courier New', monospace;">
+      ${result.slice(0, 4)} ${result.slice(4)}
+    </div>
+    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #374151;">Decimal: ${value} | Binary: ${result}</div>
+  `;
+  resultDiv.style.display = 'block';
+  
+  // Display detailed steps
+  const stepsDiv = document.getElementById('signMagSteps');
+  let stepsHTML = '';
+  
+  if (inputType === 'decimal') {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${value}₁₀</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 1: Determine the sign</strong><br>`;
+    stepsHTML += `Value ${value} is ${isNegative ? 'negative' : 'positive'}, so sign bit = <span style="color: #dc2626; font-weight: 700;">${signBit}</span></div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 2: Get absolute value</strong><br>`;
+    stepsHTML += `|${value}| = ${absValue}</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 3: Convert magnitude to 7-bit binary</strong><br>`;
+    stepsHTML += `${absValue}₁₀ = <span style="color: #059669; font-weight: 700;">${magnitude7bit}</span>₂`;
+    if (absValue > 0) {
+      stepsHTML += `<br><small style="color: #6b7280;">Division method: ${absValue} ÷ 2 repeatedly</small>`;
+    }
+    stepsHTML += `</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 4: Combine sign bit + magnitude</strong><br>`;
+    stepsHTML += `<span style="color: #dc2626; font-weight: 700;">${signBit}</span> + <span style="color: #059669; font-weight: 700;">${magnitude7bit}</span> = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', monospace;">${result}</span><br>`;
+    stepsHTML += `<small style="color: #6b7280;">↑ sign bit (MSB) | magnitude (7 bits) ↑</small></div>`;
+  } else {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${result}₂</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 1: Identify sign bit (MSB)</strong><br>`;
+    stepsHTML += `Sign bit = <span style="color: #dc2626; font-weight: 700;">${signBit}</span> → ${isNegative ? 'Negative number' : 'Positive number'}</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 2: Extract magnitude (7 bits)</strong><br>`;
+    stepsHTML += `Magnitude bits: <span style="color: #059669; font-weight: 700;">${magnitude7bit}</span>₂</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 3: Convert magnitude to decimal</strong><br>`;
+    stepsHTML += `${magnitude7bit}₂ = ${absValue}₁₀`;
+    if (absValue > 0) {
+      stepsHTML += `<br><small style="color: #6b7280;">Positional notation: powers of 2</small>`;
+    }
+    stepsHTML += `</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 4: Apply sign</strong><br>`;
+    stepsHTML += `Result = ${isNegative ? '-' : '+'}${absValue} = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-weight: 700;">${value}</span>₁₀</div>`;
+  }
+  
+  stepsHTML += `<div class="step"><strong>📝 Note:</strong> Sign-Magnitude range is -(2⁷-1) to +(2⁷-1) = <strong>-127 to +127</strong><br>`;
+  stepsHTML += `<small style="color: #6b7280;">⚠️ Has two representations for zero: +0 (00000000) and -0 (10000000)</small></div>`;
+  
+  stepsDiv.innerHTML = stepsHTML;
+  stepsDiv.style.display = 'block';
+}
+
+// 1's Complement Converter
+function convertOnesComplement() {
+  const input = document.getElementById('onesCompInput');
+  const inputType = document.getElementById('onesCompInputType').value;
+  const inputValue = input.value.trim();
+  
+  if (!inputValue) {
+    alert('Please enter a value');
+    return;
+  }
+  
+  let value, result, isNegative, absValue, positive8bit;
+  
+  if (inputType === 'decimal') {
+    // Input is decimal
+    value = parseInt(inputValue);
+    if (isNaN(value) || value < -127 || value > 127) {
+      alert('Please enter a valid number between -127 and 127');
+      return;
+    }
+    
+    isNegative = value < 0;
+    absValue = Math.abs(value);
+    positive8bit = absValue.toString(2).padStart(8, '0');
+    
+    result = positive8bit;
+    if (isNegative) {
+      result = '';
+      for (let bit of positive8bit) {
+        result += bit === '0' ? '1' : '0';
+      }
+    }
+  } else {
+    // Input is binary
+    const binary = inputValue.replace(/\s/g, '');
+    if (!/^[01]{8}$/.test(binary)) {
+      alert('Please enter a valid 8-bit binary number (e.g., 11111010)');
+      return;
+    }
+    
+    result = binary;
+    isNegative = binary[0] === '1';
+    
+    if (isNegative) {
+      // Invert to get positive
+      positive8bit = '';
+      for (let bit of binary) {
+        positive8bit += bit === '0' ? '1' : '0';
+      }
+      absValue = parseInt(positive8bit, 2);
+      value = -absValue;
+    } else {
+      positive8bit = binary;
+      value = parseInt(binary, 2);
+      absValue = value;
+    }
+  }
+  
+  // Display result
+  const resultDiv = document.getElementById('onesCompResult');
+  resultDiv.innerHTML = `
+    <div style="font-size: 1.25rem; font-weight: 700; color: #6366f1; font-family: 'Courier New', monospace;">
+      ${result.slice(0, 4)} ${result.slice(4)}
+    </div>
+    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #374151;">Decimal: ${value} | Binary: ${result}</div>
+  `;
+  resultDiv.style.display = 'block';
+  
+  // Display detailed steps
+  const stepsDiv = document.getElementById('onesCompSteps');
+  let stepsHTML = '';
+  
+  if (inputType === 'decimal') {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${value}₁₀</div>`;
+    
+    stepsHTML = `<div class="step"><strong>Step 1: Convert absolute value to 8-bit binary</strong><br>`;
+    stepsHTML += `|${value}| = ${absValue}₁₀ = <span style="color: #059669; font-weight: 700;">${positive8bit}</span>₂`;
+    if (absValue > 0) {
+      stepsHTML += `<br><small style="color: #6b7280;">Using standard binary conversion</small>`;
+    }
+    stepsHTML += `</div>`;
+    
+    if (isNegative) {
+      stepsHTML += `<div class="step"><strong>Step 2: Determine sign</strong><br>`;
+      stepsHTML += `Value ${value} is <strong>negative</strong>, so we apply 1's complement (invert all bits)</div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 3: Invert each bit</strong><br>`;
+      stepsHTML += `Positive: <code style="background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.3rem;">${positive8bit}</code><br>`;
+      stepsHTML += `<small style="color: #6b7280;">Flip: 0→1, 1→0</small><br>`;
+      stepsHTML += `1's Comp: <code style="background: #dcfce7; padding: 0.2rem 0.4rem; border-radius: 0.3rem; color: #059669; font-weight: 700;">${result}</code></div>`;
+      
+      stepsHTML += `<div class="step"><strong>✓ Final Result</strong><br>`;
+      stepsHTML += `${value}₁₀ = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', monospace; font-weight: 700;">${result}</span>₂</div>`;
+    } else {
+      stepsHTML += `<div class="step"><strong>Step 2: Determine sign</strong><br>`;
+      stepsHTML += `Value ${value} is <strong>positive</strong>, no inversion needed</div>`;
+      
+      stepsHTML += `<div class="step"><strong>✓ Final Result</strong><br>`;
+      stepsHTML += `${value}₁₀ = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', monospace; font-weight: 700;">${result}</span>₂<br>`;
+      stepsHTML += `<small style="color: #6b7280;">Positive numbers are same in all representations</small></div>`;
+    }
+  } else {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${result}₂</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 1: Check MSB (Most Significant Bit)</strong><br>`;
+    stepsHTML += `MSB = <span style="color: #dc2626; font-weight: 700;">${result[0]}</span> → ${isNegative ? '<strong>Negative</strong> number' : '<strong>Positive</strong> number'}</div>`;
+    
+    if (isNegative) {
+      stepsHTML += `<div class="step"><strong>Step 2: Invert all bits to decode</strong><br>`;
+      stepsHTML += `Given: <code style="background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.3rem;">${result}</code><br>`;
+      stepsHTML += `<small style="color: #6b7280;">Flip: 0→1, 1→0</small><br>`;
+      stepsHTML += `Result: <code style="background: #dcfce7; padding: 0.2rem 0.4rem; border-radius: 0.3rem; font-weight: 700;">${positive8bit}</code></div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 3: Convert to decimal</strong><br>`;
+      stepsHTML += `${positive8bit}₂ = ${absValue}₁₀</div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 4: Apply negative sign</strong><br>`;
+      stepsHTML += `Result = -${absValue} = <strong>${value}</strong></div>`;
+    } else {
+      stepsHTML += `<div class="step"><strong>Step 2: Convert to decimal directly</strong><br>`;
+      stepsHTML += `${result}₂ = ${value}₁₀</div>`;
+    }
+  }
+  
+  stepsHTML += `<div class="step"><strong>Note:</strong> Range is -(2⁷-1) to +(2⁷-1) = <strong>-127 to +127</strong><br>`;
+  stepsHTML += `<small style="color: #6b7280;">⚠️ Has two zeros: +0 (00000000) and -0 (11111111)</small></div>`;
+  
+  stepsDiv.innerHTML = stepsHTML;
+  stepsDiv.style.display = 'block';
+}
+
+// 2's Complement Converter
+function convertTwosComplement() {
+  const input = document.getElementById('twosCompInput');
+  const inputType = document.getElementById('twosCompInputType').value;
+  const inputValue = input.value.trim();
+  
+  if (!inputValue) {
+    alert('Please enter a value');
+    return;
+  }
+  
+  let value, result, isNegative, absValue, positive8bit, inverted = '';
+  
+  if (inputType === 'decimal') {
+    // Input is decimal
+    value = parseInt(inputValue);
+    if (isNaN(value) || value < -128 || value > 127) {
+      alert('Please enter a valid number between -128 and 127');
+      return;
+    }
+    
+    isNegative = value < 0;
+    absValue = Math.abs(value);
+    positive8bit = absValue.toString(2).padStart(8, '0');
+    
+    result = positive8bit;
+    
+    if (isNegative) {
+      // Invert bits
+      for (let bit of positive8bit) {
+        inverted += bit === '0' ? '1' : '0';
+      }
+      // Add 1
+      let carry = 1;
+      result = '';
+      for (let i = 7; i >= 0; i--) {
+        let sum = parseInt(inverted[i]) + carry;
+        result = (sum % 2) + result;
+        carry = Math.floor(sum / 2);
+      }
+    }
+  } else {
+    // Input is binary
+    const binary = inputValue.replace(/\s/g, '');
+    if (!/^[01]{8}$/.test(binary)) {
+      alert('Please enter a valid 8-bit binary number (e.g., 11111011)');
+      return;
+    }
+    
+    result = binary;
+    isNegative = binary[0] === '1';
+    
+    if (isNegative) {
+      // Subtract 1
+      let carry = 1;
+      let minusOne = '';
+      for (let i = 7; i >= 0; i--) {
+        let diff = parseInt(binary[i]) - carry;
+        if (diff < 0) {
+          diff = 1;
+          carry = 1;
+        } else {
+          carry = 0;
+        }
+        minusOne = diff + minusOne;
+      }
+      
+      // Invert to get positive
+      positive8bit = '';
+      for (let bit of minusOne) {
+        positive8bit += bit === '0' ? '1' : '0';
+      }
+      absValue = parseInt(positive8bit, 2);
+      value = -absValue;
+      inverted = minusOne;
+    } else {
+      positive8bit = binary;
+      value = parseInt(binary, 2);
+      absValue = value;
+    }
+  }
+  
+  // Display result
+  const resultDiv = document.getElementById('twosCompResult');
+  resultDiv.innerHTML = `
+    <div style="font-size: 1.25rem; font-weight: 700; color: #6366f1; font-family: 'Courier New', monospace;">
+      ${result.slice(0, 4)} ${result.slice(4)}
+    </div>
+    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #374151;">Decimal: ${value} | Binary: ${result}</div>
+  `;
+  resultDiv.style.display = 'block';
+  
+  // Display detailed steps
+  const stepsDiv = document.getElementById('twosCompSteps');
+  let stepsHTML = '';
+  
+  if (inputType === 'decimal') {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${value}₁₀</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 1: Convert absolute value to 8-bit binary</strong><br>`;
+    stepsHTML += `|${value}| = ${absValue}₁₀ = <span style="color: #059669; font-weight: 700;">${positive8bit}</span>₂`;
+    if (absValue > 0) {
+      stepsHTML += `<br><small style="color: #6b7280;">Using standard binary conversion</small>`;
+    }
+    stepsHTML += `</div>`;
+    
+    if (isNegative) {
+      stepsHTML += `<div class="step"><strong>Step 2: Determine sign</strong><br>`;
+      stepsHTML += `Value ${value} is <strong>negative</strong>, apply 2's complement (invert + add 1)</div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 3: Invert all bits (1's complement)</strong><br>`;
+      stepsHTML += `Positive: <code style="background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.3rem;">${positive8bit}</code><br>`;
+      stepsHTML += `<small style="color: #6b7280;">Flip: 0→1, 1→0</small><br>`;
+      stepsHTML += `Inverted: <code style="background: #fef3c7; padding: 0.2rem 0.4rem; border-radius: 0.3rem; color: #92400e; font-weight: 700;">${inverted}</code></div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 4: Add 1 to get 2's complement</strong><br>`;
+      stepsHTML += `<pre style="font-family: 'Courier New', monospace; margin: 0.5rem 0;">  ${inverted}\n+ 00000001\n──────────\n  <span style="color: #059669; font-weight: 700;">${result}</span></pre>`;
+      stepsHTML += `<small style="color: #6b7280;">Binary addition with carry propagation</small></div>`;
+      
+      stepsHTML += `<div class="step"><strong>✓ Final Result</strong><br>`;
+      stepsHTML += `${value}₁₀ = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', monospace; font-weight: 700;">${result}</span>₂</div>`;
+    } else {
+      stepsHTML += `<div class="step"><strong>Step 2: Determine sign</strong><br>`;
+      stepsHTML += `Value ${value} is <strong>positive</strong>, no conversion needed</div>`;
+      
+      stepsHTML += `<div class="step"><strong>✓ Final Result</strong><br>`;
+      stepsHTML += `${value}₁₀ = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-family: 'Courier New', monospace; font-weight: 700;">${result}</span>₂<br>`;
+      stepsHTML += `<small style="color: #6b7280;">Positive numbers are identical in all representations</small></div>`;
+    }
+  } else {
+    stepsHTML = `<div class="step"><strong>Input:</strong> ${result}₂</div>`;
+    
+    stepsHTML += `<div class="step"><strong>Step 1: Check MSB (Most Significant Bit)</strong><br>`;
+    stepsHTML += `MSB = <span style="color: #dc2626; font-weight: 700;">${result[0]}</span> → ${isNegative ? '<strong>Negative</strong> number' : '<strong>Positive</strong> number'}</div>`;
+    
+    if (isNegative) {
+      stepsHTML += `<div class="step"><strong>Step 2: Subtract 1 from binary</strong><br>`;
+      stepsHTML += `<pre style="font-family: 'Courier New', monospace; margin: 0.5rem 0;">  ${result}\n- 00000001\n──────────\n  <span style="font-weight: 700;">${inverted}</span></pre></div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 3: Invert all bits</strong><br>`;
+      stepsHTML += `After -1: <code style="background: #f3f4f6; padding: 0.2rem 0.4rem; border-radius: 0.3rem;">${inverted}</code><br>`;
+      stepsHTML += `<small style="color: #6b7280;">Flip: 0→1, 1→0</small><br>`;
+      stepsHTML += `Inverted: <code style="background: #dcfce7; padding: 0.2rem 0.4rem; border-radius: 0.3rem; font-weight: 700;">${positive8bit}</code></div>`;
+      
+      stepsHTML += `<div class="step"><strong>Step 4: Convert to decimal</strong><br>`;
+      stepsHTML += `${positive8bit}₂ = ${absValue}₁₀</div>`;
+      
+      stepsHTML += `<div class="step"><strong>✓ Final Result</strong><br>`;
+      stepsHTML += `Result = <span style="background: #e0e7ff; padding: 0.2rem 0.5rem; border-radius: 0.25rem; font-weight: 700;">-${absValue}</span> = <strong>${value}₁₀</strong></div>`;
+    } else {
+      stepsHTML += `<div class="step"><strong>Step 2: Convert to decimal directly</strong><br>`;
+      stepsHTML += `${result}₂ = ${value}₁₀<br>`;
+      stepsHTML += `<small style="color: #6b7280;">Positive numbers are same in all representations</small></div>`;
+    }
+  }
+  
+  stepsHTML += `<div class="step"><strong>📝 Note:</strong> 2's Complement range is -2⁷ to +(2⁷-1) = <strong>-128 to +127</strong><br>`;
+  stepsHTML += `<small style="color: #6b7280;">✅ Only one zero representation (00000000), can represent -128 uniquely!</small></div>`;
+  
+  stepsDiv.innerHTML = stepsHTML;
+  stepsDiv.style.display = 'block';
 }

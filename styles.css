@@ -6,10 +6,11 @@ body {
   background: #f7fafd;
   color: #23272f;
   margin: 0;
-  padding: 0;
+  padding: 0 1rem;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .container {
@@ -23,7 +24,12 @@ body {
   padding: clamp(1.2rem, 5vw, 2.2rem) clamp(0.5rem, 5vw, 1.5rem) clamp(1rem, 4vw, 1.5rem) clamp(0.5rem, 5vw, 1.5rem);
   border: 1.5px solid #e0e7ff;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.container > * {
+  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -91,12 +97,18 @@ h1 {
 
 .tab-content {
   display: none;
-  overflow: visible;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .tab-content.active {
   display: block;
-  overflow: visible;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 label {
@@ -901,6 +913,121 @@ input, select {
 
 .empty-dot {
   background: linear-gradient(135deg, #1f2937, #111827);
+}
+
+/* ========================================
+   SIGNED NUMBER REPRESENTATIONS SECTION
+   ======================================== */
+
+.signed-number-section {
+  background: linear-gradient(135deg, #312e81, #1e1b4b);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  margin-top: 0;
+}
+
+.signed-number-section h4 {
+  color: #e0e7ff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem 0;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.signed-subtitle {
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+/* Signed Numbers Tab - Clean Simple Style (matching other tabs) */
+
+/* Signed Numbers Section Constraints */
+#signed-numbers {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#signed-numbers > div[style*="grid"] {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#signed-numbers > div[style*="grid"] > div {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#signed-numbers h3 {
+  font-size: 0.9rem !important;
+  margin-bottom: 0.6rem !important;
+}
+
+#signed-numbers label {
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+#signed-numbers input,
+#signed-numbers .modern-dropdown,
+#signed-numbers .btn {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.85rem;
+}
+
+#signed-numbers input {
+  padding: 0.5rem;
+}
+
+#signed-numbers .btn {
+  padding: 0.6rem;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+#signed-numbers .modern-dropdown {
+  min-height: 2.2rem;
+}
+
+#signed-numbers .dropdown-selected {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+#signed-numbers .result,
+#signed-numbers .steps {
+  font-size: 0.85rem;
+}
+
+#signed-numbers .step {
+  padding: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive for Signed Numbers 3-column grid */
+@media (max-width: 1100px) {
+  #signed-numbers > div[style*="grid-template-columns: repeat(3"] {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* For very large screens, still constrain within container */
+@media (min-width: 1101px) {
+  #signed-numbers > div[style*="grid-template-columns"] {
+    max-width: 100% !important;
+  }
 }
 
 /* ========================================
@@ -1829,6 +1956,8 @@ input, select {
     font-size: 0.65rem;
   }
 }
+
+/* Responsive Signed Numbers - removed (using standard .result and .steps styles) */
 
 /* Responsive Memory Viewer */
 @media (max-width: 768px) {

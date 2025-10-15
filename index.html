@@ -22,9 +22,9 @@
       <div class="tab" onclick="openTab(event, 'ascii-converter')">ASCII Converter</div>
       <div class="tab" onclick="openTab(event, 'parity-calculator')">Parity Calculator</div>
       <div class="tab" onclick="openTab(event, 'binary-arithmetic')">Binary Arithmetic</div>
-      <div class="tab" onclick="openTab(event, 'complement-calculator')">Complements</div>
       <div class="tab" onclick="openTab(event, 'bcd-arithmetic')">BCD Arithmetic</div>
       <div class="tab" onclick="openTab(event, '8086-stack')">8086 Stack</div>
+      <div class="tab" onclick="openTab(event, 'signed-numbers')">Signed Numbers</div>
     </div>
 
     <!-- Number Converter Tab -->
@@ -236,26 +236,6 @@
     </div>
 
     <!-- Complement Calculator Tab -->
-    <div id="complement-calculator" class="tab-content">
-      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Complement Calculator</h3>
-      <label for="complementInput">Binary Number</label>
-      <input id="complementInput" type="text" placeholder="Enter binary number..." autocomplete="off" />
-      <label for="complementType">Complement Type</label>
-      <div class="modern-dropdown" id="complementTypeWrapper">
-        <div class="dropdown-selected" tabindex="0">
-          <span class="selected-text">1's Complement</span>
-          <svg class="dropdown-arrow" viewBox="0 0 24 24">
-            <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <ul class="dropdown-list">
-          <li data-value="ones" class="selected">1's Complement</li>
-          <li data-value="twos">2's Complement</li>
-        </ul>
-        <input type="hidden" id="complementType" value="ones">
-      </div>
-      <button class="btn" onclick="calculateComplement()">Calculate</button>
-      <div id="complementResult" class="result" style="display:none;"></div>
     </div>
 
     <!-- BCD Arithmetic Tab -->
@@ -556,7 +536,112 @@
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- Signed Numbers Tab -->
+    <div id="signed-numbers" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 0.5rem; font-size: 1rem;">Signed Number Representations</h3>
+      <p style="color: #64748b; margin-bottom: 1rem; font-size: 0.85rem;">
+        Explore how negative numbers are represented using Sign-Magnitude, 1's Complement, and 2's Complement
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; max-width: 100%;">
+      <!-- Sign-Magnitude Card -->
+      <div>
+        <h3 style="color: #6366f1; margin-bottom: 0.8rem; font-size: 1rem;">Sign-Magnitude</h3>
+        <label for="signMagInputType">Input Type</label>
+        <div class="modern-dropdown" id="signMagInputTypeWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Decimal</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="decimal" class="selected">Decimal</li>
+            <li data-value="binary">Binary (8-bit)</li>
+          </ul>
+          <input type="hidden" id="signMagInputType" value="decimal">
+        </div>
+        <label for="signMagInput">Input</label>
+        <input id="signMagInput" type="text" placeholder="Enter number" autocomplete="off" />
+        <button class="btn" onclick="convertSignMagnitude()">Get Sign-Magnitude</button>
+        <div id="signMagResult" class="result" style="display:none;"></div>
+        <div id="signMagSteps" class="steps" style="display:none;"></div>
+      </div>
+
+      <!-- 1's Complement Card -->
+      <div>
+        <h3 style="color: #6366f1; margin-bottom: 0.8rem; font-size: 1rem;">1's Complement</h3>
+        <label for="onesCompInputType">Input Type</label>
+        <div class="modern-dropdown" id="onesCompInputTypeWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Decimal</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="decimal" class="selected">Decimal</li>
+            <li data-value="binary">Binary (8-bit)</li>
+          </ul>
+          <input type="hidden" id="onesCompInputType" value="decimal">
+        </div>
+        <label for="onesCompInput">Input</label>
+        <input id="onesCompInput" type="text" placeholder="Enter number" autocomplete="off" />
+        <button class="btn" onclick="convertOnesComplement()">Get 1's Complement</button>
+        <div id="onesCompResult" class="result" style="display:none;"></div>
+        <div id="onesCompSteps" class="steps" style="display:none;"></div>
+      </div>
+
+      <!-- 2's Complement Card -->
+      <div>
+        <h3 style="color: #6366f1; margin-bottom: 0.8rem; font-size: 1rem;">2's Complement ⭐</h3>
+        <label for="twosCompInputType">Input Type</label>
+        <div class="modern-dropdown" id="twosCompInputTypeWrapper">
+          <div class="dropdown-selected" tabindex="0">
+            <span class="selected-text">Decimal</span>
+            <svg class="dropdown-arrow" viewBox="0 0 24 24">
+              <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <ul class="dropdown-list">
+            <li data-value="decimal" class="selected">Decimal</li>
+            <li data-value="binary">Binary (8-bit)</li>
+          </ul>
+          <input type="hidden" id="twosCompInputType" value="decimal">
+        </div>
+        <label for="twosCompInput">Input</label>
+        <input id="twosCompInput" type="text" placeholder="Enter number" autocomplete="off" />
+        <button class="btn" onclick="convertTwosComplement()">Get 2's Complement</button>
+        <div id="twosCompResult" class="result" style="display:none;"></div>
+        <div id="twosCompSteps" class="steps" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Why 2's Complement Info -->
+    <div style="margin-top: 1.5rem; background: #f7fafd; border-radius: 0.8rem; padding: 1rem; border: 1px solid #e5eaf2;">
+      <h4 style="color: #6366f1; margin-bottom: 0.75rem; font-size: 0.9rem;">⭐ Why 2's Complement?</h4>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; font-size: 0.8rem; color: #374151;">
+        <div style="background: white; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+          <div style="font-weight: 700; margin-bottom: 0.2rem; font-size: 0.8rem;">✅ Single Zero</div>
+          <div style="color: #6b7280; font-size: 0.75rem;">No separate +0 and -0</div>
+        </div>
+        <div style="background: white; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+          <div style="font-weight: 700; margin-bottom: 0.2rem; font-size: 0.8rem;">⚡ Fast Arithmetic</div>
+          <div style="color: #6b7280; font-size: 0.75rem;">Same circuit for all operations</div>
+        </div>
+        <div style="background: white; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+          <div style="font-weight: 700; margin-bottom: 0.2rem; font-size: 0.8rem;">📈 Extra Value</div>
+          <div style="color: #6b7280; font-size: 0.75rem;">Can represent -128</div>
+        </div>
+        <div style="background: white; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb;">
+          <div style="font-weight: 700; margin-bottom: 0.2rem; font-size: 0.8rem;">🏭 Industry Standard</div>
+          <div style="color: #6b7280; font-size: 0.75rem;">Used in all modern CPUs</div>
+        </div>
+      </div>
+    </div>
+    </div>  <!-- Close signed-numbers tab-content -->
+  </div>  <!-- Close container -->
 
   <div class="footer">Made with ❤️ by Atrishman Mukherjee | COA Educational Tools © 2025</div>
 

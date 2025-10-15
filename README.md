@@ -46,6 +46,14 @@ A comprehensive, open-source web-based toolkit for computer science students, ed
 - **BCD ↔ Decimal**: Binary Coded Decimal conversion with validation
 - **Excess-3 ↔ Binary**: Excess-3 code conversion for digital systems
 
+### 🔢 Signed Numbers Representations ⭐ **NEW**
+- **Sign-Magnitude**: 7-bit magnitude with 1-bit sign representation (-127 to +127)
+- **1's Complement**: Bitwise inversion for negative numbers (-127 to +127)
+- **2's Complement**: Industry-standard signed number system (-128 to +127)
+- **Bidirectional Conversion**: Input decimal or 8-bit binary, get all three representations
+- **Step-by-Step Explanations**: Detailed breakdown of each conversion method
+- **Educational Comparison**: Learn why 2's complement is the standard in modern CPUs
+
 ## 🖥️ 8086 Stack Calculator - Detailed Guide
 
 ### What Makes It Special
@@ -113,10 +121,7 @@ Example: Calculate (5 + 3) × 2
 - Step-by-step binary arithmetic solutions
 - Decimal equivalent calculations for verification
 
-### 🔄 Complement Calculator
-- **1's Complement**: Bitwise NOT operation
-- **2's Complement**: Two's complement for signed number representation
-- Essential for understanding signed binary arithmetic
+
 
 ### 📱 BCD Arithmetic
 - BCD Addition and Subtraction operations
@@ -163,21 +168,22 @@ COA_Tools/
 
 ## 💡 Use Cases
 
-- **Students**: Perfect for Computer Organization & Architecture assignments and 8086 assembly language learning
-- **Educators**: Teaching aid for digital logic, number systems, and microprocessor architecture
-- **Professionals**: Quick reference tool for embedded systems development and stack-based calculations
-- **Self-learners**: Interactive way to understand binary operations and processor behavior
-- **Assembly Programmers**: Practice 8086 stack operations in a safe simulation environment
+- **Students**: Perfect for Computer Organization & Architecture assignments, 8086 assembly language learning, and understanding signed number representations
+- **Educators**: Teaching aid for digital logic, number systems, signed arithmetic, and microprocessor architecture
+- **Professionals**: Quick reference tool for embedded systems development, stack-based calculations, and binary data handling
+- **Self-learners**: Interactive way to understand binary operations, processor behavior, and how computers represent negative numbers
+- **Assembly Programmers**: Practice 8086 stack operations and signed arithmetic in a safe simulation environment
 
 ## 🎯 Key Benefits
 
 - ✅ **No Installation Required**: Pure HTML/CSS/JavaScript implementation
 - ✅ **Authentic 8086 Simulation**: Real processor behavior with register management
+- ✅ **Signed Number Mastery**: Understand how computers represent negative numbers with all three methods
 - ✅ **Step-by-Step Solutions**: Learn the process, not just the answer
 - ✅ **Interactive Stack Operations**: Visual stack memory with real-time updates
-- ✅ **Mobile Responsive**: Works on all device sizes with optimized keypad
+- ✅ **Mobile Responsive**: Works on all device sizes with optimized layouts
 - ✅ **Offline Capable**: No internet connection needed after download
-- ✅ **Educational Focus**: Designed for learning and understanding microprocessor concepts
+- ✅ **Educational Focus**: Designed for learning and understanding computer architecture concepts
 - ✅ **Error Validation**: Input validation with helpful error messages and stack protection
 
 ## 🛠️ Technical Details
@@ -206,7 +212,7 @@ COA_Tools/
 | ASCII Converter | Text/ASCII codes | ASCII codes/Text | Full character support |
 | Parity Calculator | Binary data | Data + parity bit | Even/Odd parity |
 | Binary Arithmetic | Two binary numbers | Result + steps | All basic operations |
-| Complement Calculator | Binary number | 1's/2's complement | Step-by-step process |
+| **Signed Numbers** | Decimal/Binary | All 3 representations | Sign-Mag, 1's Comp, 2's Comp with steps |
 | BCD Arithmetic | Two BCD numbers | BCD result | Addition/Subtraction |
 
 ## 🎨 Design Features
@@ -225,13 +231,14 @@ COA_Tools/
 
 This tool is designed with education in mind:
 - **8086 Processor Simulation**: Learn real microprocessor architecture and stack operations
-- **Shows conversion steps**: Better understanding of number system transformations
+- **Signed Number Representations**: Master all three methods (Sign-Magnitude, 1's Complement, 2's Complement)
+- **Shows conversion steps**: Better understanding of number system transformations and signed arithmetic
 - **Stack-based computing**: Understand how processors manage memory and arithmetic
 - **Register management**: Learn how CPUs use registers for temporary storage
-- **Assembly language preparation**: Practice concepts used in 8086 assembly programming
-- **Validates inputs**: Helpful error messages with stack protection mechanisms
-- **Provides reference materials**: ASCII table and step-by-step operation guides
-- **Explains the logic**: Behind each operation and processor behavior
+- **Assembly language preparation**: Practice concepts used in 8086 assembly programming and signed operations
+- **Validates inputs**: Helpful error messages with stack protection mechanisms and range validation
+- **Provides reference materials**: ASCII table, complement comparisons, and step-by-step operation guides
+- **Explains the logic**: Behind each operation, processor behavior, and why 2's complement is industry standard
 - **Suitable for all levels**: Both beginners and advanced computer science students
 
 ## 🤝 Contributing
@@ -239,7 +246,9 @@ This tool is designed with education in mind:
 Feel free to contribute to this project! Some ideas:
 - **Expand 8086 simulation**: Add more processor instructions and features
 - **Additional processors**: Implement 8085, 80286, or other microprocessor simulations
-- **More number system converters**: IEEE 754 floating-point, signed number representations
+- **More number system converters**: IEEE 754 floating-point, other signed representations
+- **Enhanced signed numbers**: Add 16-bit, 32-bit, and 64-bit signed number support
+- **Floating-point representations**: Add IEEE 754 single and double precision converters
 - **Enhanced stack operations**: Implement more complex stack-based algorithms
 - **Keyboard shortcuts**: Add hotkey support for faster calculator operation
 - **Save/Load functionality**: Allow users to save stack states and operations
