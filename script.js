@@ -22,6 +22,14 @@ function openTab(evt, tabName) {
       initStackCalculator();
     }, 100);
   }
+  
+  // Initialize memory viewer when Memory Viewer tab is opened
+  if (tabName === 'memory-viewer') {
+    console.log('Memory Viewer tab opened, initializing...');
+    setTimeout(() => {
+      initMemoryViewer();
+    }, 100);
+  }
 }
 
 // Number Converter Functions
@@ -559,7 +567,7 @@ function initStackCalculator() {
   updateFlagsDisplay();
   updatePerformanceMetrics();
   updateAssemblyDisplay();
-  initMemoryViewer();
+  initInlineMemoryViewer();
   updateSignedRepresentations();
   
   // Initialize stack animation
@@ -775,6 +783,24 @@ function pushToStack() {
   registers.SP--;  // Stack pointer decreases (stack grows downward)
   registers.DX = value;  // Store last pushed value in DX
   
+  // Sync with Memory Viewer (write to stack segment)
+  if (typeof memoryViewerState !== 'undefined' && memoryViewerState.memory) {
+    const stackBase = memoryViewerState.segmentRegisters.SS * 16 + 0xFFFF;
+    const stackAddr = stackBase - ((stackMemory.length - 1) * 2);
+    
+    if (stackAddr > 0 && stackAddr < memoryViewerState.memory.length) {
+      memoryViewerState.memory[stackAddr] = value & 0xFF;           // Low byte
+      memoryViewerState.memory[stackAddr - 1] = (value >> 8) & 0xFF; // High byte
+      memoryViewerState.writtenAddresses.add(stackAddr);
+      memoryViewerState.writtenAddresses.add(stackAddr - 1);
+      
+      // If memory viewer is visible and on stack segment, refresh
+      if (memoryViewerState.selectedSegment === 'stack') {
+        setTimeout(() => renderMemoryGrid(), 100);
+      }
+    }
+  }
+  
   // Generate assembly code
   addAssemblyCode(`MOV AX, ${value}    ; Load value into AX`);
   addAssemblyCode(`PUSH AX        ; Push AX onto stack`);
@@ -816,6 +842,22 @@ function popFromStack() {
   const value = stackMemory.pop();
   registers.SP++;  // Stack pointer increases (stack shrinks)
   registers.AX = value;  // Store popped value in AX
+  
+  // Sync with Memory Viewer (clear from stack segment)
+  if (typeof memoryViewerState !== 'undefined' && memoryViewerState.memory) {
+    const stackBase = memoryViewerState.segmentRegisters.SS * 16 + 0xFFFF;
+    const stackAddr = stackBase - (stackMemory.length * 2);
+    
+    if (stackAddr > 0 && stackAddr < memoryViewerState.memory.length) {
+      memoryViewerState.memory[stackAddr] = 0x00;     // Clear low byte
+      memoryViewerState.memory[stackAddr - 1] = 0x00;  // Clear high byte
+      
+      // If memory viewer is visible and on stack segment, refresh
+      if (memoryViewerState.selectedSegment === 'stack') {
+        setTimeout(() => renderMemoryGrid(), 100);
+      }
+    }
+  }
   
   currentDisplay = value.toString();
   
@@ -1356,9 +1398,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // MEMORY VIEWER FUNCTIONS
 // ========================================
 
-// Initialize Memory Viewer (16 memory locations from FFFFH to FFF0H)
-function initMemoryViewer() {
-  // Simple inline grid
+// Initialize Inline Stack Memory Viewer (16 memory locations from FFFFH to FFF0H)
+function initInlineMemoryViewer() {
+  // Simple inline grid for 8086 Stack tab
   const memoryGridSimple = document.querySelector('.memory-grid-simple');
   
   const gridsToInit = [memoryGridSimple].filter(g => g !== null);
@@ -3172,3 +3214,1004 @@ window.pauseAnimation = pauseAnimation;
 window.stepForward = stepForward;
 window.resetAnimation = resetAnimation;
 window.changeAnimationSpeed = changeAnimationSpeed;
+
+// =============================================================================
+// MEMORY VIEWER MODULE
+// =============================================================================
+
+// Memory Viewer State
+let memoryViewerState = {
+  memory: new Uint8Array(1048576),  // 1MB memory (1024 * 1024 bytes)
+  currentAddress: 0x0000,           // Current viewing address
+  viewRows: 16,                     // Number of rows to display
+  bytesPerRow: 16,                  // Bytes per row (16 for hex editor style)
+  selectedSegment: 'data',          // Current segment (data, code, stack, extra)
+  viewMode: 'hex',                  // Display format: 'hex', 'dec', 'bin', 'ascii'
+  editingCell: null,                // Currently editing cell {address, element}
+  searchResults: [],                // Array of addresses matching search
+  currentSearchIndex: -1,           // Current position in search results
+  inspectedAddress: null,           // Address being inspected in data type viewer
+  segmentRegisters: {
+    CS: 0x0000,  // Code Segment
+    DS: 0x0000,  // Data Segment
+    SS: 0xFFFF,  // Stack Segment (starts at top)
+    ES: 0x0000   // Extra Segment
+  },
+  operationHistory: [],             // History of read/write operations
+  highlightAddress: null,           // Address to highlight after navigation
+  totalReads: 0,                    // Total read operations
+  totalWrites: 0,                   // Total write operations
+  lastAccessTime: null,             // Timestamp of last access
+  writtenAddresses: new Set()       // Track which addresses have been written
+};
+
+// ===== FORMAT CONVERSION FUNCTIONS =====
+
+// Format a memory byte value according to the current view mode
+function formatMemoryValue(byte, mode) {
+  switch(mode) {
+    case 'hex':
+      return byte.toString(16).toUpperCase().padStart(2, '0');
+    case 'dec':
+      return byte.toString(10).padStart(3, ' ');
+    case 'bin':
+      return byte.toString(2).padStart(8, '0');
+    case 'ascii':
+      return (byte >= 32 && byte <= 126) ? String.fromCharCode(byte) : '.';
+    default:
+      return byte.toString(16).toUpperCase().padStart(2, '0');
+  }
+}
+
+// Parse a value string back to a byte (0-255) based on the view mode
+function parseValueFromMode(str, mode) {
+  str = str.trim();
+  let value;
+  
+  switch(mode) {
+    case 'hex':
+      // Remove 0x prefix if present
+      str = str.replace(/^0x/i, '');
+      value = parseInt(str, 16);
+      break;
+    case 'dec':
+      value = parseInt(str, 10);
+      break;
+    case 'bin':
+      // Remove 0b prefix if present
+      str = str.replace(/^0b/i, '');
+      value = parseInt(str, 2);
+      break;
+    case 'ascii':
+      // Take first character and get its code
+      value = str.length > 0 ? str.charCodeAt(0) : 0;
+      break;
+    default:
+      value = parseInt(str, 16);
+  }
+  
+  // Validate range
+  if (isNaN(value) || value < 0 || value > 255) {
+    return null;
+  }
+  
+  return value;
+}
+
+// Set the memory view mode
+function setViewMode(mode) {
+  const validModes = ['hex', 'dec', 'bin', 'ascii'];
+  if (!validModes.includes(mode)) {
+    console.error('Invalid view mode:', mode);
+    return;
+  }
+  
+  // Update state
+  memoryViewerState.viewMode = mode;
+  
+  // Update button styles
+  document.querySelectorAll('.view-mode-btn').forEach(btn => {
+    btn.classList.remove('active');
+    const btnMode = btn.id.replace('viewMode', '').toLowerCase();
+    if (btnMode === mode) {
+      btn.classList.add('active');
+    }
+  });
+  
+  // Re-render memory grid with new format
+  renderMemoryGrid();
+  
+  console.log(`View mode changed to: ${mode}`);
+}
+
+// Initialize Memory Viewer
+function initMemoryViewer() {
+  console.log('Memory Viewer initialized');
+  
+  // Initialize memory with zeros
+  memoryViewerState.memory.fill(0);
+  
+  // Set initial segment addresses
+  memoryViewerState.segmentRegisters.DS = 0x0000;  // Data starts at 0
+  memoryViewerState.segmentRegisters.CS = 0x1000;  // Code starts at 4KB
+  memoryViewerState.segmentRegisters.SS = 0xFFFF;  // Stack at top
+  memoryViewerState.segmentRegisters.ES = 0x2000;  // Extra at 8KB
+  
+  // Update displays
+  updateSegmentRegisterDisplay();
+  renderMemoryGrid();
+  updateMemoryStats();
+  
+  console.log('Memory initialized: 1MB address space ready');
+}
+
+// Render Memory Grid
+function renderMemoryGrid() {
+  const tbody = document.getElementById('memoryTableBody');
+  if (!tbody) return;
+  
+  const startAddr = memoryViewerState.currentAddress;
+  const rows = memoryViewerState.viewRows;
+  const bytesPerRow = memoryViewerState.bytesPerRow;
+  
+  let html = '';
+  
+  for (let row = 0; row < rows; row++) {
+    const rowAddr = startAddr + (row * bytesPerRow);
+    
+    // Skip if address exceeds memory size
+    if (rowAddr >= memoryViewerState.memory.length) break;
+    
+    // Check if this row contains the highlight address
+    const shouldHighlight = memoryViewerState.highlightAddress !== null && 
+                           memoryViewerState.highlightAddress >= rowAddr && 
+                           memoryViewerState.highlightAddress < rowAddr + bytesPerRow;
+    
+    html += shouldHighlight ? '<tr class="highlight-row">' : '<tr>';
+    
+    // Address column
+    html += `<td class="memory-address-cell">0x${rowAddr.toString(16).toUpperCase().padStart(4, '0')}</td>`;
+    
+    // Data columns (16 bytes)
+    let asciiChars = '';
+    for (let col = 0; col < bytesPerRow; col++) {
+      const addr = rowAddr + col;
+      
+      if (addr < memoryViewerState.memory.length) {
+        const value = memoryViewerState.memory[addr];
+        const formattedValue = formatMemoryValue(value, memoryViewerState.viewMode);
+        const hexValue = value.toString(16).toUpperCase().padStart(2, '0');
+        const isWritten = memoryViewerState.writtenAddresses.has(addr);
+        const cellClass = isWritten ? 'memory-data-cell written' : 'memory-data-cell';
+        
+        // Add both click and double-click handlers
+        html += `<td class="${cellClass}" onclick="readMemoryCell(${addr})" ondblclick="makeMemoryCellEditable(event, ${addr})" title="Address: 0x${addr.toString(16).toUpperCase()}\nValue: 0x${hexValue} (${value})\nDouble-click to edit">${formattedValue}</td>`;
+        
+        // Build ASCII representation (always for ASCII column)
+        const char = (value >= 32 && value <= 126) ? String.fromCharCode(value) : '.';
+        asciiChars += char;
+      } else {
+        html += '<td class="memory-data-cell">--</td>';
+        asciiChars += ' ';
+      }
+    }
+    
+    // ASCII column
+    html += `<td class="memory-ascii-cell">${asciiChars}</td>`;
+    
+    html += '</tr>';
+  }
+  
+  tbody.innerHTML = html;
+  
+  // Update address display
+  const endAddr = startAddr + (rows * bytesPerRow) - 1;
+  document.getElementById('currentAddressDisplay').textContent = `0x${startAddr.toString(16).toUpperCase().padStart(4, '0')}`;
+  document.getElementById('addressRangeDisplay').textContent = 
+    `0x${startAddr.toString(16).toUpperCase().padStart(4, '0')} - 0x${endAddr.toString(16).toUpperCase().padStart(4, '0')}`;
+  
+  // Update Memory Map if it exists
+  if (window.updateCurrentViewIndicator) {
+    window.updateCurrentViewIndicator();
+  }
+}
+
+// Read Memory Cell (for display/inspection)
+function readMemoryCell(address) {
+  if (address < 0 || address >= memoryViewerState.memory.length) {
+    alert('Invalid memory address!');
+    return;
+  }
+  
+  const value = memoryViewerState.memory[address];
+  memoryViewerState.totalReads++;
+  memoryViewerState.lastAccessTime = new Date();
+  
+  // Add to history
+  addMemoryOperation('READ', address, null, value);
+  
+  // Visual feedback
+  highlightMemoryCell(address, 'read');
+  
+  // Update stats
+  updateMemoryStats();
+  
+  // Update data type inspector
+  updateDataTypeInspector(address);
+  
+  // Show info
+  alert(`Memory Read\n\nAddress: 0x${address.toString(16).toUpperCase()}\nValue: 0x${value.toString(16).toUpperCase().padStart(2, '0')} (${value} decimal)\nASCII: ${(value >= 32 && value <= 126) ? String.fromCharCode(value) : 'N/A'}`);
+}
+
+// Make Memory Cell Editable (double-click handler)
+function makeMemoryCellEditable(event, address) {
+  // Prevent the single-click event from firing
+  event.stopPropagation();
+  
+  // Don't allow editing if already editing another cell
+  if (memoryViewerState.editingCell !== null) {
+    return;
+  }
+  
+  const cell = event.target;
+  const currentValue = memoryViewerState.memory[address];
+  const formattedValue = formatMemoryValue(currentValue, memoryViewerState.viewMode);
+  
+  // Save editing state
+  memoryViewerState.editingCell = { address, element: cell };
+  
+  // Add editing class
+  cell.classList.add('editing');
+  
+  // Create input element
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = formattedValue;
+  input.style.width = '100%';
+  input.style.textAlign = 'center';
+  input.style.fontFamily = "'Courier New', monospace";
+  input.style.fontSize = 'inherit';
+  input.style.border = 'none';
+  input.style.background = 'transparent';
+  input.style.padding = '0';
+  
+  // Handle Enter key (save)
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveMemoryCellEdit(address, input.value, cell);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelMemoryCellEdit(cell);
+    }
+  };
+  
+  // Handle blur (save on losing focus)
+  input.onblur = () => {
+    setTimeout(() => {
+      if (memoryViewerState.editingCell !== null) {
+        saveMemoryCellEdit(address, input.value, cell);
+      }
+    }, 100);
+  };
+  
+  // Replace cell content with input
+  cell.innerHTML = '';
+  cell.appendChild(input);
+  input.focus();
+  input.select();
+  
+  console.log(`Editing cell at address 0x${address.toString(16).toUpperCase()}`);
+}
+
+// Save Memory Cell Edit
+function saveMemoryCellEdit(address, valueStr, cell) {
+  const newValue = parseValueFromMode(valueStr, memoryViewerState.viewMode);
+  
+  if (newValue === null) {
+    alert(`Invalid value for ${memoryViewerState.viewMode.toUpperCase()} mode!\n\nPlease enter a valid value (0-255).`);
+    cancelMemoryCellEdit(cell);
+    return;
+  }
+  
+  // Write the new value
+  const success = writeMemory(address, newValue);
+  
+  if (success) {
+    console.log(`Memory cell at 0x${address.toString(16).toUpperCase()} updated to ${newValue}`);
+  }
+  
+  // Clear editing state
+  memoryViewerState.editingCell = null;
+  cell.classList.remove('editing');
+  
+  // Re-render grid
+  renderMemoryGrid();
+}
+
+// Cancel Memory Cell Edit
+function cancelMemoryCellEdit(cell) {
+  memoryViewerState.editingCell = null;
+  cell.classList.remove('editing');
+  renderMemoryGrid();
+  console.log('Edit cancelled');
+}
+
+// ===== MEMORY SEARCH FUNCTIONS =====
+
+// Update Format Hint
+function updateFormatHint() {
+  const searchFormat = document.getElementById('searchFormat');
+  const formatHint = document.getElementById('formatHint');
+  
+  if (!formatHint) return;
+  
+  const hints = {
+    hex: 'Examples: FF, A5, 3E, 00',
+    dec: 'Examples: 255, 165, 62, 0',
+    bin: 'Examples: 11111111, 10100101',
+    ascii: 'Examples: Hello, World, A'
+  };
+  
+  formatHint.textContent = hints[searchFormat.value] || 'Select a format';
+}
+
+// Search Memory for Value
+function searchMemory() {
+  const searchInput = document.getElementById('searchInput');
+  const searchFormat = document.getElementById('searchFormat');
+  const searchValue = searchInput.value.trim();
+  
+  if (!searchValue) {
+    alert('Please enter a search value!');
+    return;
+  }
+  
+  // Parse search value based on format
+  const format = searchFormat.value;
+  const byteValue = parseValueFromMode(searchValue, format);
+  
+  if (byteValue === null) {
+    alert(`Invalid ${format.toUpperCase()} value!\n\nPlease enter a valid value (0-255).`);
+    return;
+  }
+  
+  // Search through memory
+  memoryViewerState.searchResults = [];
+  for (let addr = 0; addr < memoryViewerState.memory.length; addr++) {
+    if (memoryViewerState.memory[addr] === byteValue) {
+      memoryViewerState.searchResults.push(addr);
+    }
+  }
+  
+  // Update UI
+  const searchResultsDiv = document.getElementById('searchResults');
+  const searchResultText = document.getElementById('searchResultText');
+  
+  if (memoryViewerState.searchResults.length > 0) {
+    memoryViewerState.currentSearchIndex = 0;
+    searchResultText.textContent = `Found ${memoryViewerState.searchResults.length} match${memoryViewerState.searchResults.length > 1 ? 'es' : ''} for value ${searchValue}`;
+    searchResultsDiv.style.display = 'block';
+    
+    // Navigate to first result
+    goToSearchResult(0);
+  } else {
+    searchResultText.textContent = `No matches found for value ${searchValue}`;
+    searchResultsDiv.style.display = 'block';
+  }
+  
+  console.log(`Search complete: ${memoryViewerState.searchResults.length} matches found`);
+}
+
+// Go to Specific Search Result
+function goToSearchResult(index) {
+  if (memoryViewerState.searchResults.length === 0) return;
+  
+  const addr = memoryViewerState.searchResults[index];
+  
+  // Navigate to address
+  memoryViewerState.currentAddress = Math.floor(addr / memoryViewerState.bytesPerRow) * memoryViewerState.bytesPerRow;
+  memoryViewerState.highlightAddress = addr;
+  
+  // Re-render grid
+  renderMemoryGrid();
+  
+  // Update search result text
+  const searchResultText = document.getElementById('searchResultText');
+  searchResultText.textContent = `Match ${index + 1} of ${memoryViewerState.searchResults.length} at address 0x${addr.toString(16).toUpperCase().padStart(4, '0')}`;
+}
+
+// Go to Next Search Result
+function goToNextSearchResult() {
+  if (memoryViewerState.searchResults.length === 0) return;
+  
+  memoryViewerState.currentSearchIndex = (memoryViewerState.currentSearchIndex + 1) % memoryViewerState.searchResults.length;
+  goToSearchResult(memoryViewerState.currentSearchIndex);
+}
+
+// Go to Previous Search Result
+function goToPreviousSearchResult() {
+  if (memoryViewerState.searchResults.length === 0) return;
+  
+  memoryViewerState.currentSearchIndex--;
+  if (memoryViewerState.currentSearchIndex < 0) {
+    memoryViewerState.currentSearchIndex = memoryViewerState.searchResults.length - 1;
+  }
+  goToSearchResult(memoryViewerState.currentSearchIndex);
+}
+
+// Clear Search
+function clearSearch() {
+  memoryViewerState.searchResults = [];
+  memoryViewerState.currentSearchIndex = -1;
+  memoryViewerState.highlightAddress = null;
+  
+  document.getElementById('searchResults').style.display = 'none';
+  document.getElementById('searchInput').value = '';
+  
+  renderMemoryGrid();
+  console.log('Search cleared');
+}
+
+// ===== DATA TYPE INSPECTOR FUNCTIONS =====
+
+// Update Data Type Inspector with address info
+function updateDataTypeInspector(address) {
+  memoryViewerState.inspectedAddress = address;
+  
+  const inspectorDiv = document.getElementById('dataTypeInspector');
+  inspectorDiv.style.display = 'block';
+  
+  // Update address
+  document.getElementById('inspectorAddress').textContent = `0x${address.toString(16).toUpperCase().padStart(5, '0')}`;
+  
+  // Unsigned byte
+  const byte = memoryViewerState.memory[address];
+  document.getElementById('inspectorByte').textContent = `${byte} (0x${byte.toString(16).toUpperCase().padStart(2, '0')})`;
+  
+  // Signed byte (-128 to 127)
+  const signedByte = byte > 127 ? byte - 256 : byte;
+  document.getElementById('inspectorSignedByte').textContent = `${signedByte}`;
+  
+  // 16-bit word (little-endian)
+  if (address + 1 < memoryViewerState.memory.length) {
+    const word = memoryViewerState.memory[address] | (memoryViewerState.memory[address + 1] << 8);
+    document.getElementById('inspectorWord').textContent = `${word} (0x${word.toString(16).toUpperCase().padStart(4, '0')})`;
+    
+    // 16-bit word (big-endian)
+    const wordBE = (memoryViewerState.memory[address] << 8) | memoryViewerState.memory[address + 1];
+    document.getElementById('inspectorWordBE').textContent = `${wordBE} (0x${wordBE.toString(16).toUpperCase().padStart(4, '0')})`;
+  } else {
+    document.getElementById('inspectorWord').textContent = 'N/A';
+    document.getElementById('inspectorWordBE').textContent = 'N/A';
+  }
+  
+  // 32-bit dword
+  if (address + 3 < memoryViewerState.memory.length) {
+    const dword = memoryViewerState.memory[address] | 
+                  (memoryViewerState.memory[address + 1] << 8) |
+                  (memoryViewerState.memory[address + 2] << 16) |
+                  (memoryViewerState.memory[address + 3] << 24);
+    document.getElementById('inspectorDWord').textContent = `${dword >>> 0} (0x${(dword >>> 0).toString(16).toUpperCase().padStart(8, '0')})`;
+    
+    // Float (32-bit IEEE 754)
+    const buffer = new ArrayBuffer(4);
+    const view = new DataView(buffer);
+    view.setUint8(0, memoryViewerState.memory[address]);
+    view.setUint8(1, memoryViewerState.memory[address + 1]);
+    view.setUint8(2, memoryViewerState.memory[address + 2]);
+    view.setUint8(3, memoryViewerState.memory[address + 3]);
+    const floatVal = view.getFloat32(0, true); // true = little-endian
+    document.getElementById('inspectorFloat').textContent = floatVal.toFixed(6);
+  } else {
+    document.getElementById('inspectorDWord').textContent = 'N/A';
+    document.getElementById('inspectorFloat').textContent = 'N/A';
+  }
+  
+  // ASCII string (up to 16 characters or null-terminated)
+  let str = '"';
+  for (let i = 0; i < 16 && address + i < memoryViewerState.memory.length; i++) {
+    const b = memoryViewerState.memory[address + i];
+    if (b === 0) break; // Null-terminated
+    str += (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
+  }
+  str += '"';
+  document.getElementById('inspectorString').textContent = str;
+  
+  console.log(`Data type inspector updated for address 0x${address.toString(16).toUpperCase()}`);
+}
+
+// ===== MEMORY FILL FUNCTIONS =====
+
+// Show Memory Fill Dialog
+function showMemoryFillDialog() {
+  document.getElementById('memoryFillDialog').style.display = 'flex';
+  document.getElementById('fillStartAddress').focus();
+}
+
+// Close Memory Fill Dialog
+function closeMemoryFillDialog() {
+  document.getElementById('memoryFillDialog').style.display = 'none';
+  document.getElementById('fillStartAddress').value = '';
+  document.getElementById('fillEndAddress').value = '';
+  document.getElementById('fillValue').value = '';
+}
+
+// Execute Memory Fill
+function executeMemoryFill() {
+  const startAddrStr = document.getElementById('fillStartAddress').value.trim();
+  const endAddrStr = document.getElementById('fillEndAddress').value.trim();
+  const valueStr = document.getElementById('fillValue').value.trim();
+  
+  if (!startAddrStr || !endAddrStr || !valueStr) {
+    alert('Please fill in all fields!');
+    return;
+  }
+  
+  // Parse addresses
+  const startAddr = parseInt(startAddrStr.replace(/^0x/i, ''), 16);
+  const endAddr = parseInt(endAddrStr.replace(/^0x/i, ''), 16);
+  
+  // Parse value
+  const value = parseInt(valueStr.replace(/^0x/i, ''), 16);
+  
+  // Validate
+  if (isNaN(startAddr) || startAddr < 0 || startAddr >= memoryViewerState.memory.length) {
+    alert('Invalid start address!');
+    return;
+  }
+  
+  if (isNaN(endAddr) || endAddr < 0 || endAddr >= memoryViewerState.memory.length) {
+    alert('Invalid end address!');
+    return;
+  }
+  
+  if (startAddr > endAddr) {
+    alert('Start address must be less than or equal to end address!');
+    return;
+  }
+  
+  if (isNaN(value) || value < 0 || value > 255) {
+    alert('Invalid fill value (must be 0-255)!');
+    return;
+  }
+  
+  // Fill memory
+  const count = fillMemoryRange(startAddr, endAddr, value);
+  
+  // Close dialog
+  closeMemoryFillDialog();
+  
+  // Show success message
+  alert(`Memory Fill Complete!\n\nFilled ${count} bytes from 0x${startAddr.toString(16).toUpperCase()} to 0x${endAddr.toString(16).toUpperCase()} with value 0x${value.toString(16).toUpperCase().padStart(2, '0')}`);
+  
+  // Navigate to start address
+  memoryViewerState.currentAddress = Math.floor(startAddr / memoryViewerState.bytesPerRow) * memoryViewerState.bytesPerRow;
+  memoryViewerState.highlightAddress = startAddr;
+  
+  renderMemoryGrid();
+}
+
+// Fill Memory Range
+function fillMemoryRange(startAddr, endAddr, value) {
+  let count = 0;
+  
+  for (let addr = startAddr; addr <= endAddr; addr++) {
+    if (addr < memoryViewerState.memory.length) {
+      memoryViewerState.memory[addr] = value;
+      memoryViewerState.writtenAddresses.add(addr);
+      count++;
+    }
+  }
+  
+  // Update stats
+  memoryViewerState.totalWrites += count;
+  memoryViewerState.lastAccessTime = new Date();
+  
+  // Add to history
+  addMemoryOperation('FILL', startAddr, null, value);
+  
+  // Update displays
+  updateMemoryStats();
+  
+  console.log(`Filled ${count} bytes with value ${value}`);
+  return count;
+}
+
+// Write Memory
+function writeMemory(address, value) {
+  if (address < 0 || address >= memoryViewerState.memory.length) {
+    alert('Invalid memory address!');
+    return false;
+  }
+  
+  if (value < 0 || value > 255) {
+    alert('Value must be a byte (0-255)!');
+    return false;
+  }
+  
+  const oldValue = memoryViewerState.memory[address];
+  memoryViewerState.memory[address] = value;
+  memoryViewerState.writtenAddresses.add(address);
+  memoryViewerState.totalWrites++;
+  memoryViewerState.lastAccessTime = new Date();
+  
+  // Add to history
+  addMemoryOperation('WRITE', address, oldValue, value);
+  
+  // Visual feedback
+  highlightMemoryCell(address, 'write');
+  
+  // Update displays
+  renderMemoryGrid();
+  updateMemoryStats();
+  
+  // Update data type inspector if this address is being inspected
+  if (memoryViewerState.inspectedAddress === address || 
+      (memoryViewerState.inspectedAddress !== null && 
+       address >= memoryViewerState.inspectedAddress && 
+       address < memoryViewerState.inspectedAddress + 4)) {
+    updateDataTypeInspector(memoryViewerState.inspectedAddress);
+  }
+  
+  return true;
+}
+
+// Highlight Memory Cell with Animation
+function highlightMemoryCell(address, type) {
+  // This is handled by CSS classes in renderMemoryGrid
+  // Re-render to show animation
+  setTimeout(() => {
+    renderMemoryGrid();
+  }, 500);
+}
+
+// Add Memory Operation to History
+function addMemoryOperation(type, address, oldValue, newValue) {
+  const operation = {
+    type: type,
+    address: address,
+    oldValue: oldValue,
+    newValue: newValue,
+    timestamp: new Date().toLocaleTimeString()
+  };
+  
+  memoryViewerState.operationHistory.unshift(operation);
+  
+  // Keep only last 50 operations
+  if (memoryViewerState.operationHistory.length > 50) {
+    memoryViewerState.operationHistory.pop();
+  }
+  
+  updateHistoryDisplay();
+}
+
+// Update History Display
+function updateHistoryDisplay() {
+  const historyLog = document.getElementById('memoryHistoryLog');
+  if (!historyLog) return;
+  
+  if (memoryViewerState.operationHistory.length === 0) {
+    historyLog.innerHTML = `
+      <div class="history-empty">
+        <span style="font-size: 2rem;">📝</span>
+        <p>No memory operations yet. Perform read/write operations to see history.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  memoryViewerState.operationHistory.forEach(op => {
+    const operationClass = op.type === 'WRITE' ? 'write-operation' : 'read-operation';
+    const operationIcon = op.type === 'WRITE' ? '✍️' : '📖';
+    
+    let details = `${operationIcon} <strong>${op.type}</strong> at 0x${op.address.toString(16).toUpperCase().padStart(4, '0')}`;
+    
+    if (op.type === 'WRITE') {
+      details += ` | ${op.oldValue.toString(16).toUpperCase().padStart(2, '0')} → ${op.newValue.toString(16).toUpperCase().padStart(2, '0')}`;
+    } else {
+      details += ` | Value: ${op.newValue.toString(16).toUpperCase().padStart(2, '0')}`;
+    }
+    
+    html += `
+      <div class="history-item ${operationClass}">
+        <span>${details}</span>
+        <span style="font-size: 0.75rem; color: #64748b;">${op.timestamp}</span>
+      </div>
+    `;
+  });
+  
+  historyLog.innerHTML = html;
+  
+  // Update count
+  const countBadge = document.querySelector('.history-count');
+  if (countBadge) {
+    countBadge.textContent = `${memoryViewerState.operationHistory.length} operation${memoryViewerState.operationHistory.length !== 1 ? 's' : ''}`;
+  }
+}
+
+// Update Memory Statistics
+function updateMemoryStats() {
+  document.getElementById('totalReads').textContent = memoryViewerState.totalReads;
+  document.getElementById('totalWrites').textContent = memoryViewerState.totalWrites;
+  document.getElementById('memoryUsed').textContent = `${memoryViewerState.writtenAddresses.size} bytes`;
+  document.getElementById('lastAccess').textContent = memoryViewerState.lastAccessTime 
+    ? memoryViewerState.lastAccessTime.toLocaleTimeString() 
+    : 'Never';
+}
+
+// Switch Segment
+function switchSegment(segment) {
+  memoryViewerState.selectedSegment = segment;
+  
+  // Update button states
+  document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`segment${segment.charAt(0).toUpperCase() + segment.slice(1)}`).classList.add('active');
+  
+  // Jump to segment start address
+  let targetAddress = 0;
+  switch(segment) {
+    case 'data':
+      targetAddress = memoryViewerState.segmentRegisters.DS * 16;
+      break;
+    case 'code':
+      targetAddress = memoryViewerState.segmentRegisters.CS * 16;
+      break;
+    case 'stack':
+      targetAddress = memoryViewerState.segmentRegisters.SS * 16;
+      break;
+    case 'extra':
+      targetAddress = memoryViewerState.segmentRegisters.ES * 16;
+      break;
+  }
+  
+  memoryViewerState.currentAddress = Math.min(targetAddress, memoryViewerState.memory.length - 256);
+  renderMemoryGrid();
+}
+
+// Go to Address
+function goToAddress() {
+  const inputElement = document.getElementById('memoryAddressInput');
+  const input = inputElement.value.trim();
+  
+  console.log('goToAddress called with input:', input);
+  
+  if (!input) {
+    alert('Please enter an address!');
+    return;
+  }
+  
+  // Parse hex address (with or without 0x prefix)
+  const cleanInput = input.replace(/^0x/i, '');
+  const address = parseInt(cleanInput, 16);
+  
+  console.log('Parsed address:', address, 'from input:', cleanInput);
+  
+  if (isNaN(address)) {
+    alert('Invalid hex address format! Please enter a hex number (e.g., 100 or 0x100)');
+    return;
+  }
+  
+  if (address < 0 || address >= memoryViewerState.memory.length) {
+    alert(`Address out of range! Valid range: 0x00000 - 0x${(memoryViewerState.memory.length - 1).toString(16).toUpperCase().padStart(5, '0')}`);
+    return;
+  }
+  
+  // Align to row boundary (16-byte alignment)
+  const alignedAddress = Math.floor(address / memoryViewerState.bytesPerRow) * memoryViewerState.bytesPerRow;
+  memoryViewerState.currentAddress = alignedAddress;
+  
+  console.log('Navigating to aligned address:', alignedAddress.toString(16));
+  
+  // Store the target address for highlighting
+  memoryViewerState.highlightAddress = address;
+  
+  renderMemoryGrid();
+  
+  // Remove highlight after animation
+  setTimeout(() => {
+    memoryViewerState.highlightAddress = null;
+  }, 1500);
+  
+  // Visual feedback - no alert, just console
+  console.log(`Jumped to address 0x${alignedAddress.toString(16).toUpperCase().padStart(5, '0')}`);
+  
+  // Clear input
+  inputElement.value = '';
+  inputElement.focus();
+}
+
+// Random Memory Access (for demo)
+function randomMemoryAccess() {
+  const maxAddr = memoryViewerState.memory.length - 256;
+  const randomAddr = Math.floor(Math.random() * maxAddr);
+  const alignedAddr = Math.floor(randomAddr / memoryViewerState.bytesPerRow) * memoryViewerState.bytesPerRow;
+  
+  console.log('🎲 Random navigation:', {
+    randomAddr: '0x' + randomAddr.toString(16).toUpperCase(),
+    alignedAddr: '0x' + alignedAddr.toString(16).toUpperCase()
+  });
+  
+  memoryViewerState.currentAddress = alignedAddr;
+  memoryViewerState.highlightAddress = alignedAddr;
+  renderMemoryGrid();
+  
+  // Update address input to show where we landed
+  const addressInput = document.getElementById('memoryAddressInput');
+  if (addressInput) {
+    addressInput.value = '0x' + alignedAddr.toString(16).toUpperCase();
+  }
+}
+
+// Show Write Dialog
+function showWriteDialog() {
+  document.getElementById('writeMemoryDialog').style.display = 'flex';
+  document.getElementById('writeAddressInput').focus();
+}
+
+// Close Write Dialog
+function closeWriteDialog() {
+  document.getElementById('writeMemoryDialog').style.display = 'none';
+  document.getElementById('writeAddressInput').value = '';
+  document.getElementById('writeValueInput').value = '';
+}
+
+// Execute Memory Write
+function executeMemoryWrite() {
+  const addrInput = document.getElementById('writeAddressInput').value.trim();
+  const valueInput = document.getElementById('writeValueInput').value.trim();
+  
+  if (!addrInput || !valueInput) {
+    alert('Please enter both address and value!');
+    return;
+  }
+  
+  // Parse hex address
+  const cleanAddr = addrInput.replace(/^0x/i, '');
+  const address = parseInt(cleanAddr, 16);
+  
+  // Parse hex value
+  const cleanValue = valueInput.replace(/^0x/i, '');
+  const value = parseInt(cleanValue, 16);
+  
+  if (isNaN(address) || isNaN(value)) {
+    alert('Invalid hex format!');
+    return;
+  }
+  
+  if (writeMemory(address, value)) {
+    closeWriteDialog();
+    
+    // Navigate to the written address
+    const alignedAddr = Math.floor(address / memoryViewerState.bytesPerRow) * memoryViewerState.bytesPerRow;
+    memoryViewerState.currentAddress = alignedAddr;
+    renderMemoryGrid();
+  }
+}
+
+// Clear Memory History
+function clearMemoryHistory() {
+  if (confirm('Clear all operation history?')) {
+    memoryViewerState.operationHistory = [];
+    updateHistoryDisplay();
+  }
+}
+
+// Export Memory Data
+function exportMemoryData() {
+  // Export non-zero memory locations
+  let exportData = 'Memory Dump\n';
+  exportData += '='.repeat(50) + '\n\n';
+  
+  memoryViewerState.writtenAddresses.forEach(addr => {
+    const value = memoryViewerState.memory[addr];
+    exportData += `0x${addr.toString(16).toUpperCase().padStart(4, '0')}: 0x${value.toString(16).toUpperCase().padStart(2, '0')} (${value})\n`;
+  });
+  
+  exportData += '\n' + '='.repeat(50) + '\n';
+  exportData += `Total written addresses: ${memoryViewerState.writtenAddresses.size}\n`;
+  exportData += `Total operations: ${memoryViewerState.operationHistory.length}\n`;
+  
+  // Download as file
+  const blob = new Blob([exportData], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'memory_dump.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Update Segment Register Display
+function updateSegmentRegisterDisplay() {
+  document.getElementById('csRegister').textContent = `0x${memoryViewerState.segmentRegisters.CS.toString(16).toUpperCase().padStart(4, '0')}`;
+  document.getElementById('dsRegister').textContent = `0x${memoryViewerState.segmentRegisters.DS.toString(16).toUpperCase().padStart(4, '0')}`;
+  document.getElementById('ssRegister').textContent = `0x${memoryViewerState.segmentRegisters.SS.toString(16).toUpperCase().padStart(4, '0')}`;
+  document.getElementById('esRegister').textContent = `0x${memoryViewerState.segmentRegisters.ES.toString(16).toUpperCase().padStart(4, '0')}`;
+}
+
+// Sync with Stack Operations (integration with 8086 Stack)
+function syncMemoryWithStack() {
+  if (!stackMemory || stackMemory.length === 0) return;
+  
+  // Calculate stack addresses (stack grows downward from SS:FFFF)
+  const stackBase = memoryViewerState.segmentRegisters.SS * 16 + 0xFFFF;
+  
+  // Write stack contents to memory
+  stackMemory.forEach((value, index) => {
+    const stackAddr = stackBase - (index * 2); // 2 bytes per stack entry (word size)
+    
+    // Write value as 16-bit word (little-endian)
+    if (stackAddr > 0 && stackAddr < memoryViewerState.memory.length) {
+      memoryViewerState.memory[stackAddr] = value & 0xFF;           // Low byte
+      memoryViewerState.memory[stackAddr - 1] = (value >> 8) & 0xFF; // High byte
+      memoryViewerState.writtenAddresses.add(stackAddr);
+      memoryViewerState.writtenAddresses.add(stackAddr - 1);
+    }
+  });
+  
+  // If memory viewer is on stack segment, refresh display
+  if (memoryViewerState.selectedSegment === 'stack') {
+    renderMemoryGrid();
+  }
+}
+
+// Interactive Demo Function
+async function demoWriteAndRead() {
+  // Notify user
+  const startDemo = confirm(
+    '🎬 Welcome to Memory Viewer Demo!\n\n' +
+    'This demo will:\n' +
+    '1. Write "HELLO" to memory addresses 100-104\n' +
+    '2. Navigate to address 100\n' +
+    '3. Show you the written data\n\n' +
+    'Ready to see how it works?'
+  );
+  
+  if (!startDemo) return;
+  
+  // Step 1: Write HELLO
+  const message = 'HELLO';
+  let startAddress = 0x100;
+  
+  for (let i = 0; i < message.length; i++) {
+    const charCode = message.charCodeAt(i);
+    writeMemory(startAddress + i, charCode);
+    await sleep(300); // Small delay for visual effect
+  }
+  
+  // Step 2: Navigate to the address
+  memoryViewerState.currentAddress = 0x100;
+  memoryViewerState.highlightAddress = 0x100;
+  renderMemoryGrid();
+  
+  // Step 3: Show success message
+  setTimeout(() => {
+    alert(
+      '✅ Demo Complete!\n\n' +
+      'Look at the memory grid:\n' +
+      '• Green cells at address 0x0100-0x0104 contain "HELLO"\n' +
+      '• Click any green cell to read its value\n' +
+      '• Check "Operation History" on the right\n' +
+      '• See statistics updated at the bottom\n\n' +
+      'Now try writing your own data! 😊'
+    );
+    memoryViewerState.highlightAddress = null;
+  }, 1500);
+}
+
+// Make functions globally accessible
+window.initMemoryViewer = initMemoryViewer;
+window.switchSegment = switchSegment;
+window.goToAddress = goToAddress;
+window.randomMemoryAccess = randomMemoryAccess;
+window.showWriteDialog = showWriteDialog;
+window.closeWriteDialog = closeWriteDialog;
+window.executeMemoryWrite = executeMemoryWrite;
+window.clearMemoryHistory = clearMemoryHistory;
+window.exportMemoryData = exportMemoryData;
+window.readMemoryCell = readMemoryCell;
+window.demoWriteAndRead = demoWriteAndRead;
+
+window.updateCurrentViewIndicator = updateCurrentViewIndicator;

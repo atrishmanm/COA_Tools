@@ -27,6 +27,7 @@
       <div class="tab" onclick="openTab(event, 'signed-numbers')">Signed Numbers</div>
       <div class="tab" onclick="openTab(event, 'ieee754')">IEEE 754 Float</div>
       <div class="tab" onclick="openTab(event, 'booths-algorithm')">Booth's Algorithm</div>
+      <div class="tab" onclick="openTab(event, 'memory-viewer')">Memory Viewer</div>
     </div>
 
     <!-- Number Converter Tab -->
@@ -1380,6 +1381,657 @@
         }
       </style>
 
+      <!-- Memory Viewer Styles -->
+      <style>
+        .memory-viewer-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 2rem;
+        }
+
+        .memory-viewer-header {
+          text-align: center;
+          margin-bottom: 2rem;
+        }
+
+        /* Control Panel */
+        .memory-controls-panel {
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          padding: 2rem;
+          border-radius: 1rem;
+          margin-bottom: 2rem;
+          border: 2px solid #e0e7ff;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-group-mem {
+          margin-bottom: 1.5rem;
+        }
+
+        .control-group-mem:last-child {
+          margin-bottom: 0;
+        }
+
+        .control-label {
+          display: block;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #475569;
+          margin-bottom: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        /* Segment Buttons */
+        .segment-buttons {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 0.75rem;
+        }
+
+        .segment-btn {
+          background: white;
+          border: 2px solid #e5e7eb;
+          padding: 0.9rem 1.2rem;
+          border-radius: 0.7rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          color: #475569;
+        }
+
+        .segment-btn:hover {
+          background: #f8fafc;
+          border-color: #6366f1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .segment-btn.active {
+          background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+          color: white;
+          border-color: #6366f1;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* View Mode Buttons */
+        .view-mode-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25) !important;
+        }
+
+        .view-mode-btn.active {
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+          color: white !important;
+          border-color: #6366f1 !important;
+          box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4) !important;
+        }
+
+        /* Memory cells editable cursor */
+        .memory-data-cell {
+          cursor: pointer;
+          position: relative;
+        }
+
+        .memory-data-cell:hover::after {
+          content: '✏️';
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          font-size: 0.7rem;
+          opacity: 0.6;
+        }
+
+        .memory-data-cell.editing {
+          background: #fef3c7 !important;
+          border: 2px solid #fbbf24 !important;
+        }
+
+        .memory-data-cell input {
+          width: 100%;
+          text-align: center;
+          border: none;
+          background: transparent;
+          font-family: 'Courier New', monospace;
+          font-size: inherit;
+          padding: 0;
+        }
+
+        .memory-data-cell input:focus {
+          outline: none;
+        }
+
+        /* Address Input */
+        .address-input-group {
+          display: flex;
+          gap: 0.75rem;
+        }
+
+        .address-input {
+          flex: 1;
+          padding: 0.85rem 1.2rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 0.7rem;
+          font-family: 'Courier New', monospace;
+          font-size: 0.95rem;
+          transition: all 0.2s ease;
+        }
+
+        .address-input:focus {
+          outline: none;
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+          padding: 0.85rem 1.5rem;
+          border: none;
+          border-radius: 0.7rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .primary-btn {
+          background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .primary-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        .secondary-btn {
+          background: white;
+          color: #475569;
+          border: 2px solid #e5e7eb;
+        }
+
+        .secondary-btn:hover {
+          background: #f8fafc;
+          border-color: #6366f1;
+          color: #6366f1;
+        }
+
+        .write-btn {
+          background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+          color: white;
+          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .write-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .operation-buttons {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
+        }
+
+        /* Segment Registers Panel */
+        .segment-registers-panel {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          margin-bottom: 2rem;
+          border: 2px solid #e5e7eb;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .registers-grid-mem {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+        }
+
+        .register-card-mem {
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          padding: 1.2rem;
+          border-radius: 0.8rem;
+          border: 2px solid #bfdbfe;
+          text-align: center;
+          transition: all 0.3s ease;
+        }
+
+        .register-card-mem:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+          border-color: #3b82f6;
+        }
+
+        .register-name-mem {
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 0.5rem;
+        }
+
+        .register-value-mem {
+          font-family: 'Courier New', monospace;
+          font-size: 1.3rem;
+          font-weight: 700;
+          color: #3b82f6;
+          margin-bottom: 0.3rem;
+        }
+
+        .register-desc {
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+
+        /* Memory Grid */
+        .memory-grid-container {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          margin-bottom: 2rem;
+          border: 2px solid #e5e7eb;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .memory-grid-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          flex-wrap: wrap;
+          gap: 1rem;
+        }
+
+        .memory-info {
+          display: flex;
+          gap: 1rem;
+        }
+
+        .info-badge {
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          padding: 0.5rem 1rem;
+          border-radius: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          color: #475569;
+          border: 2px solid #bfdbfe;
+        }
+
+        .info-badge strong {
+          color: #3b82f6;
+          font-family: 'Courier New', monospace;
+        }
+
+        .memory-grid-wrapper {
+          overflow-x: auto;
+          border-radius: 0.7rem;
+          border: 2px solid #e5e7eb;
+        }
+
+        .memory-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: 'Courier New', monospace;
+          font-size: 0.85rem;
+        }
+
+        .memory-table thead {
+          background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+          color: white;
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
+
+        .memory-table th {
+          padding: 0.75rem 0.5rem;
+          text-align: center;
+          font-weight: 700;
+          font-size: 0.75rem;
+          letter-spacing: 0.5px;
+        }
+
+        .memory-table td {
+          padding: 0.6rem 0.5rem;
+          text-align: center;
+          border: 1px solid #e5e7eb;
+          transition: all 0.2s ease;
+        }
+
+        .memory-table tbody tr:hover {
+          background: #f8fafc;
+        }
+
+        .memory-address-cell {
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+          font-weight: 700;
+          color: #475569;
+          position: sticky;
+          left: 0;
+        }
+
+        .memory-data-cell {
+          cursor: pointer;
+          color: #3b82f6;
+          font-weight: 600;
+          position: relative;
+        }
+
+        .memory-data-cell:hover {
+          background: #dbeafe !important;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+          z-index: 10;
+          border: 2px solid #3b82f6 !important;
+          font-weight: 700;
+        }
+        
+        .memory-data-cell:hover::after {
+          content: '👆 Click to Read';
+          position: absolute;
+          top: -35px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #1e293b;
+          color: white;
+          padding: 0.4rem 0.7rem;
+          border-radius: 0.4rem;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          z-index: 1000;
+          animation: tooltipBounce 0.3s ease;
+        }
+        
+        @keyframes tooltipBounce {
+          0% { opacity: 0; top: -25px; }
+          100% { opacity: 1; top: -35px; }
+        }
+
+        .memory-data-cell.written {
+          background: #dcfce7;
+          color: #059669;
+          animation: writeFlash 0.5s ease-out;
+        }
+
+        .memory-data-cell.read {
+          background: #fef3c7;
+          color: #f59e0b;
+          animation: readFlash 0.5s ease-out;
+        }
+        
+        /* Highlight target row after navigation */
+        .memory-table tr.highlight-row {
+          background: #fef9c3 !important;
+          animation: highlightRow 1.5s ease-out;
+        }
+        
+        .memory-table tr.highlight-row .memory-data-cell {
+          background: #fef3c7;
+          border: 2px solid #fbbf24;
+        }
+
+        .memory-ascii-cell {
+          color: #64748b;
+          font-size: 0.8rem;
+        }
+        
+        @keyframes highlightRow {
+          0% {
+            background: #fbbf24;
+          }
+          100% {
+            background: #fef9c3;
+          }
+        }
+
+        @keyframes writeFlash {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        @keyframes readFlash {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+
+        /* Memory History Panel */
+        .memory-history-panel {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          margin-bottom: 2rem;
+          border: 2px solid #e5e7eb;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+        }
+
+        .history-count {
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          padding: 0.4rem 0.9rem;
+          border-radius: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          color: #3b82f6;
+          font-weight: 600;
+          border: 2px solid #bfdbfe;
+        }
+
+        .history-log {
+          max-height: 300px;
+          overflow-y: auto;
+          border-radius: 0.7rem;
+          border: 2px solid #e5e7eb;
+          padding: 1rem;
+        }
+
+        .history-empty {
+          text-align: center;
+          padding: 2rem 1rem;
+          color: #94a3b8;
+        }
+
+        .history-empty p {
+          font-family: 'Poppins', sans-serif;
+          margin-top: 0.5rem;
+        }
+
+        .history-item {
+          padding: 0.8rem 1rem;
+          margin-bottom: 0.5rem;
+          border-radius: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+          transform: translateX(5px);
+        }
+
+        .history-item.write-operation {
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+          border: 2px solid #86efac;
+        }
+
+        .history-item.read-operation {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          border: 2px solid #fbbf24;
+        }
+
+        /* Memory Statistics */
+        .memory-stats-panel {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+
+        .stat-card-mem {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          border: 2px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .stat-card-mem:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+          border-color: #6366f1;
+        }
+
+        .stat-icon {
+          font-size: 2rem;
+        }
+
+        .stat-content {
+          flex: 1;
+        }
+
+        .stat-label {
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.8rem;
+          color: #64748b;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 0.3rem;
+        }
+
+        .stat-value {
+          font-family: 'Poppins', sans-serif;
+          font-size: 1.4rem;
+          color: #3b82f6;
+          font-weight: 700;
+        }
+
+        /* Write Dialog */
+        .memory-write-dialog {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        .dialog-content {
+          background: white;
+          padding: 2rem;
+          border-radius: 1rem;
+          max-width: 400px;
+          width: 90%;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideInUp 0.3s ease-out;
+        }
+
+        .dialog-content h4 {
+          color: #6366f1;
+          margin-bottom: 1.5rem;
+          font-family: 'Poppins', sans-serif;
+        }
+
+        .dialog-input-group {
+          margin-bottom: 1.2rem;
+        }
+
+        .dialog-input-group label {
+          display: block;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          color: #475569;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+
+        .dialog-input-group input {
+          width: 100%;
+          padding: 0.8rem 1rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 0.5rem;
+          font-family: 'Courier New', monospace;
+          font-size: 0.95rem;
+          transition: all 0.2s ease;
+        }
+
+        .dialog-input-group input:focus {
+          outline: none;
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .dialog-buttons {
+          display: flex;
+          gap: 0.75rem;
+          margin-top: 1.5rem;
+        }
+
+        .dialog-buttons button {
+          flex: 1;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .memory-viewer-container {
+            padding: 1rem;
+          }
+
+          .segment-buttons {
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .address-input-group {
+            flex-direction: column;
+          }
+
+          .memory-info {
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .memory-table {
+            font-size: 0.75rem;
+          }
+
+          .memory-table th,
+          .memory-table td {
+            padding: 0.4rem 0.3rem;
+          }
+        }
+      </style>
+
       <!-- Operation History Table -->
       <div id="boothHistory" style="display:none; animation: slideInUp 0.6s ease-out;">
         <h4 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
@@ -1403,6 +2055,519 @@
         </div>
       </div>
     </div>  <!-- Close booths-algorithm tab-content -->
+
+    <!-- Memory Viewer Tab -->
+    <div id="memory-viewer" class="tab-content">
+      <div class="memory-viewer-container">
+        <!-- Header -->
+        <div class="memory-viewer-header">
+          <h3 style="color: #6366f1; margin-bottom: 0.5rem; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.5rem;">💾</span> 8086 Memory Viewer
+          </h3>
+          <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 0.5rem;">
+            View and edit computer memory like a real programmer! 1MB of simulated memory space.
+          </p>
+        </div>
+
+        <!-- Quick Start Guide -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+          <h4 style="margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.3rem;">🎯</span> Quick Start Guide
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 0.5rem; backdrop-filter: blur(10px);">
+              <div style="font-weight: 700; margin-bottom: 0.5rem;">1️⃣ Write Data</div>
+              <div style="font-size: 0.85rem; opacity: 0.95;">Click green "Write Memory" button to store a value at any address</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 0.5rem; backdrop-filter: blur(10px);">
+              <div style="font-weight: 700; margin-bottom: 0.5rem;">2️⃣ Read Data</div>
+              <div style="font-size: 0.85rem; opacity: 0.95;">Click any memory cell to see its value in hex, decimal & ASCII</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 0.5rem; backdrop-filter: blur(10px);">
+              <div style="font-weight: 700; margin-bottom: 0.5rem;">3️⃣ Navigate</div>
+              <div style="font-size: 0.85rem; opacity: 0.95;">Type address or click segment buttons to jump around memory</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simplified Control Panel -->
+        <div style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          
+          <!-- Main Actions (Prominent) -->
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <button onclick="showWriteDialog()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 1.2rem; border-radius: 0.8rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(16, 185, 129, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'">
+              <span style="font-size: 1.5rem;">✍️</span>
+              <span>Write to Memory</span>
+            </button>
+            
+            <button onclick="demoWriteAndRead()" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; padding: 1.2rem; border-radius: 0.8rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(99, 102, 241, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(99, 102, 241, 0.3)'">
+              <span style="font-size: 1.5rem;">🎬</span>
+              <span>Try Demo</span>
+            </button>
+          </div>
+
+          <!-- Navigation Section -->
+          <div style="border-top: 2px solid #f1f5f9; padding-top: 1.5rem;">
+            <h4 style="color: #475569; margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+              <span>🧭</span> Jump to Address
+            </h4>
+            <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+              <input type="text" id="memoryAddressInput" placeholder="Type address (e.g. 100 or 1000)" style="flex: 1; min-width: 200px; padding: 0.9rem 1.2rem; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-size: 1rem; font-family: 'Courier New', monospace; transition: all 0.3s ease;" onkeypress="if(event.key === 'Enter') goToAddress()" onfocus="this.style.borderColor='#6366f1'; this.style.boxShadow='0 0 0 3px rgba(99, 102, 241, 0.1)'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'" />
+              <button onclick="goToAddress()" style="padding: 0.9rem 1.5rem; background: #6366f1; color: white; border: none; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#4f46e5'" onmouseout="this.style.background='#6366f1'">
+                🔍 Go
+              </button>
+              <button onclick="randomMemoryAccess()" style="padding: 0.9rem 1.5rem; background: #f1f5f9; color: #475569; border: none; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                🎲 Random
+              </button>
+            </div>
+
+            <!-- Segment Buttons -->
+            <h4 style="color: #475569; margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📍</span> Memory Segments
+            </h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+              <button class="segment-btn active" onclick="switchSegment('data')" id="segmentData" title="Data storage (starts at 0x00000)">
+                📂 Data
+              </button>
+              <button class="segment-btn" onclick="switchSegment('code')" id="segmentCode" title="Program code (starts at 0x10000)">
+                📝 Code
+              </button>
+              <button class="segment-btn" onclick="switchSegment('stack')" id="segmentStack" title="Stack memory (starts at 0xFFFF0)">
+                📚 Stack
+              </button>
+              <button class="segment-btn" onclick="switchSegment('extra')" id="segmentExtra" title="Extra storage (starts at 0x20000)">
+                ➕ Extra
+              </button>
+            </div>
+
+            <!-- Utility Buttons -->
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button onclick="showMemoryFillDialog()" style="padding: 0.7rem 1.2rem; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; border-radius: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139, 92, 246, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(139, 92, 246, 0.3)'">
+                🎨 Fill Memory
+              </button>
+              <button onclick="clearMemoryHistory()" style="padding: 0.7rem 1.2rem; background: #f1f5f9; color: #475569; border: none; border-radius: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                🗑️ Clear History
+              </button>
+              <button onclick="exportMemoryData()" style="padding: 0.7rem 1.2rem; background: #f1f5f9; color: #475569; border: none; border-radius: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                💾 Export
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Segment Registers Display -->
+        <div class="segment-registers-panel">
+          <h4 style="color: #6366f1; margin-bottom: 1rem; font-size: 1rem;">Segment Registers</h4>
+          <div class="registers-grid-mem">
+            <div class="register-card-mem">
+              <div class="register-name-mem">CS</div>
+              <div class="register-value-mem" id="csRegister">0x0000</div>
+              <div class="register-desc">Code Segment</div>
+            </div>
+            <div class="register-card-mem">
+              <div class="register-name-mem">DS</div>
+              <div class="register-value-mem" id="dsRegister">0x0000</div>
+              <div class="register-desc">Data Segment</div>
+            </div>
+            <div class="register-card-mem">
+              <div class="register-name-mem">SS</div>
+              <div class="register-value-mem" id="ssRegister">0xFFFF</div>
+              <div class="register-desc">Stack Segment</div>
+            </div>
+            <div class="register-card-mem">
+              <div class="register-name-mem">ES</div>
+              <div class="register-value-mem" id="esRegister">0x0000</div>
+              <div class="register-desc">Extra Segment</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- View Mode Toggle Buttons -->
+        <div style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <h4 style="color: #6366f1; margin: 0 0 1rem 0; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>👁️</span> Display Format
+          </h4>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button onclick="setViewMode('hex')" id="viewModeHex" class="view-mode-btn active" style="flex: 1; min-width: 120px; padding: 0.9rem 1.2rem; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; border: none; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem;">
+              <span style="font-size: 1.2rem;">🔢</span>
+              <span>Hexadecimal</span>
+            </button>
+            <button onclick="setViewMode('dec')" id="viewModeDec" class="view-mode-btn" style="flex: 1; min-width: 120px; padding: 0.9rem 1.2rem; background: #f1f5f9; color: #475569; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem;">
+              <span style="font-size: 1.2rem;">📊</span>
+              <span>Decimal</span>
+            </button>
+            <button onclick="setViewMode('bin')" id="viewModeBin" class="view-mode-btn" style="flex: 1; min-width: 120px; padding: 0.9rem 1.2rem; background: #f1f5f9; color: #475569; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem;">
+              <span style="font-size: 1.2rem;">💾</span>
+              <span>Binary</span>
+            </button>
+            <button onclick="setViewMode('ascii')" id="viewModeAscii" class="view-mode-btn" style="flex: 1; min-width: 120px; padding: 0.9rem 1.2rem; background: #f1f5f9; color: #475569; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem;">
+              <span style="font-size: 1.2rem;">🔤</span>
+              <span>ASCII Text</span>
+            </button>
+          </div>
+          <p style="color: #64748b; font-size: 0.8rem; margin: 1rem 0 0 0; text-align: center;">
+            <strong>💡 Tip:</strong> Double-click any cell to edit its value directly!
+          </p>
+        </div>
+
+        <!-- Memory Search Panel -->
+        <div style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <h4 style="color: #6366f1; margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+            <span style="font-size: 1.3rem;">🔍</span> Memory Search
+          </h4>
+          
+          <!-- Search Input Row -->
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+              Search Value
+            </label>
+            <input type="text" id="searchInput" placeholder="Enter value to search (e.g., FF, 255, 11111111, Hello)" 
+              style="width: 100%; padding: 1rem 1.2rem; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-size: 1rem; font-family: 'Courier New', monospace; transition: all 0.3s ease; box-sizing: border-box;" 
+              onfocus="this.style.borderColor='#6366f1'; this.style.boxShadow='0 0 0 4px rgba(99, 102, 241, 0.1)'" 
+              onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'" 
+              onkeypress="if(event.key === 'Enter') searchMemory()" />
+          </div>
+
+          <!-- Format Selector + Search Button Row -->
+          <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start; margin-bottom: 1rem;">
+            <div>
+              <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                Search Format
+              </label>
+              <select id="searchFormat" onchange="updateFormatHint()" style="width: 100%; padding: 1rem 1.2rem; border: 2px solid #e2e8f0; border-radius: 0.6rem; font-size: 0.95rem; font-weight: 600; cursor: pointer; background: white; transition: all 0.3s ease; box-sizing: border-box; min-height: 52px;" onfocus="this.style.borderColor='#6366f1'; this.style.boxShadow='0 0 0 4px rgba(99, 102, 241, 0.1)'" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'">
+                <option value="hex">Hex</option>
+                <option value="dec">Decimal</option>
+                <option value="bin">Binary</option>
+                <option value="ascii">ASCII</option>
+              </select>
+              <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #94a3b8;">
+                <span id="formatHint">Examples: FF, A5, 3E, 00</span>
+              </p>
+            </div>
+            <div style="padding-top: 1.9rem;">
+              <button onclick="searchMemory()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 0.6rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; font-size: 1rem; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); height: 52px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(245, 158, 11, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.3)'">
+                🔍 Search
+              </button>
+            </div>
+          </div>
+
+          <!-- Search Results -->
+          <div id="searchResults" style="display: none;">
+            <div style="display: flex; flex-direction: column; gap: 1rem; padding: 1.2rem; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #fbbf24; border-radius: 0.8rem; box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span id="searchResultText" style="font-size: 1rem; font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+                  <span style="font-size: 1.2rem;">✅</span> Found 0 matches
+                </span>
+              </div>
+              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button onclick="goToPreviousSearchResult()" style="flex: 1; min-width: 120px; padding: 0.8rem 1.2rem; background: white; color: #92400e; border: 2px solid #fbbf24; border-radius: 0.6rem; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#fef3c7'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='white'; this.style.transform='translateY(0)'">
+                  <span>⬅️</span> Previous
+                </button>
+                <button onclick="goToNextSearchResult()" style="flex: 1; min-width: 120px; padding: 0.8rem 1.2rem; background: white; color: #92400e; border: 2px solid #fbbf24; border-radius: 0.6rem; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#fef3c7'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='white'; this.style.transform='translateY(0)'">
+                  <span>Next</span> ➡️
+                </button>
+                <button onclick="clearSearch()" style="flex: 1; min-width: 120px; padding: 0.8rem 1.2rem; background: #dc2626; color: white; border: 2px solid #b91c1c; border-radius: 0.6rem; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#b91c1c'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#dc2626'; this.style.transform='translateY(0)'">
+                  <span>❌</span> Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Tips -->
+          <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-left: 4px solid #6366f1; border-radius: 0.5rem;">
+            <p style="color: #475569; font-size: 0.85rem; margin: 0; line-height: 1.6;">
+              <strong style="color: #6366f1;">💡 Search Tips:</strong><br>
+              • Press <kbd style="background: white; padding: 0.2rem 0.5rem; border-radius: 0.3rem; border: 1px solid #e2e8f0; font-family: monospace;">Enter</kbd> to search quickly<br>
+              • Use navigation buttons to jump between matches<br>
+              • Search highlights matching cells in the memory grid
+            </p>
+          </div>
+        </div>
+
+        <!-- Data Type Inspector Panel -->
+        <div style="background: white; padding: 1.5rem; border-radius: 1rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.08);">
+          <h4 style="color: #6366f1; margin: 0 0 1rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+            <span style="font-size: 1.3rem;">📊</span> Data Type Inspector
+          </h4>
+          <div style="padding: 1rem; background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <p style="color: #475569; font-size: 0.9rem; margin: 0; line-height: 1.6;">
+              <strong style="color: #3b82f6;">👆 How to use:</strong> Click any memory cell in the grid below to see how its value is interpreted as different data types (8-bit, 16-bit, 32-bit, float, and ASCII).
+            </p>
+          </div>
+          <div id="dataTypeInspector" style="display: none;">
+            <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.5rem; border-radius: 0.8rem; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem;">
+                <!-- Address -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>📍</span> Address
+                  </div>
+                  <div id="inspectorAddress" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #3b82f6; font-weight: 700;">0x0000</div>
+                </div>
+                
+                <!-- Unsigned Byte -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>🔢</span> Unsigned Byte
+                  </div>
+                  <div id="inspectorByte" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #059669; font-weight: 700;">0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">0-255</div>
+                </div>
+                
+                <!-- Signed Byte -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>➕➖</span> Signed Byte
+                  </div>
+                  <div id="inspectorSignedByte" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #059669; font-weight: 700;">0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">-128 to 127</div>
+                </div>
+                
+                <!-- Word LE -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>📦</span> Word (LE)
+                  </div>
+                  <div id="inspectorWord" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #8b5cf6; font-weight: 700;">0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">16-bit Little-Endian</div>
+                </div>
+                
+                <!-- Word BE -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>📦</span> Word (BE)
+                  </div>
+                  <div id="inspectorWordBE" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #8b5cf6; font-weight: 700;">0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">16-bit Big-Endian</div>
+                </div>
+                
+                <!-- DWord -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>📦📦</span> DWord
+                  </div>
+                  <div id="inspectorDWord" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #ec4899; font-weight: 700;">0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">32-bit Integer</div>
+                </div>
+                
+                <!-- Float -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>🔢.🔢</span> Float
+                  </div>
+                  <div id="inspectorFloat" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #f59e0b; font-weight: 700;">0.0</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">32-bit IEEE 754</div>
+                </div>
+                
+                <!-- ASCII String -->
+                <div style="background: white; padding: 1rem; border-radius: 0.6rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 0.3rem;">
+                    <span>🔤</span> ASCII String
+                  </div>
+                  <div id="inspectorString" style="font-family: 'Courier New', monospace; font-size: 1.2rem; color: #06b6d4; font-weight: 700; word-break: break-all;">"..."</div>
+                  <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.3rem;">Up to 16 chars</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Grid Container -->
+        <div class="memory-grid-container">
+          <div class="memory-grid-header">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <h4 style="color: #6366f1; margin: 0 0 0.3rem 0; font-size: 1.1rem;">💾 Memory Contents</h4>
+                <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
+                  <strong>Tip:</strong> Click to read, double-click to edit. Green cells = written data.
+                </p>
+              </div>
+              <div class="memory-info">
+                <span class="info-badge">Current: <strong id="currentAddressDisplay">0x0000</strong></span>
+                <span class="info-badge">Range: <strong id="addressRangeDisplay">0x0000 - 0x00FF</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memory Grid -->
+          <div class="memory-grid-wrapper">
+            <table class="memory-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>+0</th>
+                  <th>+1</th>
+                  <th>+2</th>
+                  <th>+3</th>
+                  <th>+4</th>
+                  <th>+5</th>
+                  <th>+6</th>
+                  <th>+7</th>
+                  <th>+8</th>
+                  <th>+9</th>
+                  <th>+A</th>
+                  <th>+B</th>
+                  <th>+C</th>
+                  <th>+D</th>
+                  <th>+E</th>
+                  <th>+F</th>
+                  <th>ASCII</th>
+                </tr>
+              </thead>
+              <tbody id="memoryTableBody">
+                <!-- Memory cells will be rendered here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Memory Operation History -->
+        <div class="memory-history-panel">
+          <div class="history-header">
+            <h4 style="color: #6366f1; margin-bottom: 0;">Operation History</h4>
+            <span class="history-count">0 operations</span>
+          </div>
+          <div class="history-log" id="memoryHistoryLog">
+            <div class="history-empty">
+              <span style="font-size: 2rem;">📝</span>
+              <p>No memory operations yet. Perform read/write operations to see history.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Color Legend Guide -->
+        <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); padding: 1.2rem; border-radius: 0.8rem; margin-bottom: 1.5rem; border: 2px solid #e2e8f0;">
+          <h4 style="color: #475569; margin: 0 0 1rem 0; font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🎨</span> Color Guide
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.8rem;">
+            <div style="display: flex; align-items: center; gap: 0.7rem;">
+              <div style="width: 40px; height: 30px; background: #dbeafe; border: 2px solid #3b82f6; border-radius: 0.3rem; flex-shrink: 0;"></div>
+              <span style="font-size: 0.85rem; color: #475569;"><strong>Blue</strong> = Empty memory (00)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.7rem;">
+              <div style="width: 40px; height: 30px; background: #dcfce7; border: 2px solid #10b981; border-radius: 0.3rem; flex-shrink: 0;"></div>
+              <span style="font-size: 0.85rem; color: #475569;"><strong>Green</strong> = Written data</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.7rem;">
+              <div style="width: 40px; height: 30px; background: #fef9c3; border: 2px solid #fbbf24; border-radius: 0.3rem; flex-shrink: 0;"></div>
+              <span style="font-size: 0.85rem; color: #475569;"><strong>Yellow</strong> = Current row</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Statistics -->
+        <div class="memory-stats-panel">
+          <div class="stat-card-mem">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Reads</div>
+              <div class="stat-value" id="totalReads">0</div>
+            </div>
+          </div>
+          <div class="stat-card-mem">
+            <div class="stat-icon">✍️</div>
+            <div class="stat-content">
+              <div class="stat-label">Total Writes</div>
+              <div class="stat-value" id="totalWrites">0</div>
+            </div>
+          </div>
+          <div class="stat-card-mem">
+            <div class="stat-icon">💾</div>
+            <div class="stat-content">
+              <div class="stat-label">Memory Used</div>
+              <div class="stat-value" id="memoryUsed">0 bytes</div>
+            </div>
+          </div>
+          <div class="stat-card-mem">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-content">
+              <div class="stat-label">Last Access</div>
+              <div class="stat-value" id="lastAccess">Never</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Write Memory Dialog (Hidden by default) -->
+        <div class="memory-write-dialog" id="writeMemoryDialog" style="display: none;">
+          <div class="dialog-content" style="max-width: 500px;">
+            <h4 style="margin-bottom: 0.5rem;">✍️ Write to Memory</h4>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Store a value at any memory address (like a programmer!)</p>
+            
+            <div class="dialog-input-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span>📍 Memory Address</span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(hex number 0-FFFFF)</span>
+              </label>
+              <input type="text" id="writeAddressInput" placeholder="Try: 100, 1000, or ABCD" style="width: 100%; padding: 0.9rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; font-family: 'Courier New', monospace;" />
+              <p style="font-size: 0.75rem; color: #64748b; margin: 0.3rem 0 0 0;">Examples: 100, 0x1000, FFFF0</p>
+            </div>
+            
+            <div class="dialog-input-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span>💾 Data Value</span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(hex byte 00-FF)</span>
+              </label>
+              <input type="text" id="writeValueInput" placeholder="Try: 42, FF, or A5" maxlength="4" style="width: 100%; padding: 0.9rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; font-family: 'Courier New', monospace;" />
+              <p style="font-size: 0.75rem; color: #64748b; margin: 0.3rem 0 0 0;">Examples: 42 (letter B), FF (max value), 00 (zero)</p>
+            </div>
+            
+            <div class="dialog-buttons" style="margin-top: 1.5rem;">
+              <button onclick="executeMemoryWrite()" class="action-btn primary-btn" style="flex: 1; background: #10b981; padding: 0.9rem;">
+                ✅ Write to Memory
+              </button>
+              <button onclick="closeWriteDialog()" class="action-btn secondary-btn" style="flex: 1; padding: 0.9rem;">
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Memory Fill Dialog (Hidden by default) -->
+        <div class="memory-write-dialog" id="memoryFillDialog" style="display: none;">
+          <div class="dialog-content" style="max-width: 550px;">
+            <h4 style="margin-bottom: 0.5rem;">🎨 Fill Memory Range</h4>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Fill a range of memory addresses with a value or pattern</p>
+            
+            <div class="dialog-input-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span>📍 Start Address</span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(hex: 0-FFFFF)</span>
+              </label>
+              <input type="text" id="fillStartAddress" placeholder="e.g., 1000" style="width: 100%; padding: 0.9rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; font-family: 'Courier New', monospace;" />
+            </div>
+            
+            <div class="dialog-input-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span>🏁 End Address</span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(hex: 0-FFFFF)</span>
+              </label>
+              <input type="text" id="fillEndAddress" placeholder="e.g., 10FF" style="width: 100%; padding: 0.9rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; font-family: 'Courier New', monospace;" />
+            </div>
+            
+            <div class="dialog-input-group">
+              <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span>💾 Fill Value</span>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">(hex byte: 00-FF)</span>
+              </label>
+              <input type="text" id="fillValue" placeholder="e.g., FF or 00" maxlength="4" style="width: 100%; padding: 0.9rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 1rem; font-family: 'Courier New', monospace;" />
+              <p style="font-size: 0.75rem; color: #64748b; margin: 0.3rem 0 0 0;">Examples: 00 (zeros), FF (all ones), AA (pattern)</p>
+            </div>
+            
+            <div class="dialog-buttons" style="margin-top: 1.5rem;">
+              <button onclick="executeMemoryFill()" class="action-btn primary-btn" style="flex: 1; background: #8b5cf6; padding: 0.9rem;">
+                ✅ Fill Memory
+              </button>
+              <button onclick="closeMemoryFillDialog()" class="action-btn secondary-btn" style="flex: 1; padding: 0.9rem;">
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>  <!-- Close memory-viewer tab-content -->
+
+  </div>  <!-- Close container -->
 
   </div>  <!-- Close container -->
 

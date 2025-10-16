@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Test - COA_Tools</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      color: #667eea;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    
+    .test-section {
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      border-left: 4px solid #667eea;
+    }
+    
+    .test-section h2 {
+      color: #334155;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    
+    button {
+      padding: 0.8rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: transform 0.2s;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    
+    .success {
+      color: #10b981;
+      font-weight: 600;
+    }
+    
+    .error {
+      color: #ef4444;
+      font-weight: 600;
+    }
+    
+    .status {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 0.3rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    .status.online {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status.offline {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 COA_Tools Backend Test</h1>
+    <p class="subtitle">Test all backend API endpoints</p>
+    
+    <div id="server-status" class="status offline">⏳ Checking server...</div>
+    
+    <!-- Health Check -->
+    <div class="test-section">
+      <h2>1️⃣ Health Check</h2>
+      <button onclick="testHealth()">Test Server Health</button>
+      <div id="health-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Session Management -->
+    <div class="test-section">
+      <h2>2️⃣ Session Management</h2>
+      <button onclick="testCreateSession()">Create Session</button>
+      <button onclick="testGetSession()">Get Session Data</button>
+      <div id="session-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Save/Load States -->
+    <div class="test-section">
+      <h2>3️⃣ Save/Load States</h2>
+      <button onclick="testSaveState()">Save Test State</button>
+      <button onclick="testLoadState()">Load Last State</button>
+      <button onclick="testListStates()">List All States</button>
+      <div id="state-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Number Conversion -->
+    <div class="test-section">
+      <h2>4️⃣ Number Conversion API</h2>
+      <button onclick="testConvert()">Binary to Hex (1010 → ?)</button>
+      <div id="convert-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Binary Arithmetic -->
+    <div class="test-section">
+      <h2>5️⃣ Binary Arithmetic API</h2>
+      <button onclick="testBinaryAdd()">Add (1010 + 0101)</button>
+      <button onclick="testBinaryMultiply()">Multiply (110 × 11)</button>
+      <div id="arithmetic-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Assembly Sharing -->
+    <div class="test-section">
+      <h2>6️⃣ Assembly Code Sharing</h2>
+      <button onclick="testSaveAssembly()">Save Assembly Code</button>
+      <button onclick="testLoadAssembly()">Load Last Assembly</button>
+      <div id="assembly-result" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Analytics -->
+    <div class="test-section">
+      <h2>7️⃣ Analytics</h2>
+      <button onclick="testTrackUsage()">Track Test Usage</button>
+      <button onclick="testGetAnalytics()">Get Analytics</button>
+      <div id="analytics-result" class="result" style="display: none;"></div>
+    </div>
+  </div>
+  
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+    let testSessionId = null;
+    let testStateId = null;
+    let testAssemblyId = null;
+    
+    // Check server status on load
+    async function checkServerStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        if (data.status === 'healthy') {
+          document.getElementById('server-status').className = 'status online';
+          document.getElementById('server-status').textContent = '✅ Server Online';
+        }
+      } catch (error) {
+        document.getElementById('server-status').className = 'status offline';
+        document.getElementById('server-status').textContent = '❌ Server Offline - Start server with "npm start"';
+      }
+    }
+    
+    function showResult(elementId, data, isError = false) {
+      const element = document.getElementById(elementId);
+      element.style.display = 'block';
+      element.innerHTML = `<span class="${isError ? 'error' : 'success'}">${isError ? '❌ Error' : '✅ Success'}</span>\n\n${JSON.stringify(data, null, 2)}`;
+    }
+    
+    // Test Health Check
+    async function testHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        showResult('health-result', data);
+      } catch (error) {
+        showResult('health-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Create Session
+    async function testCreateSession() {
+      try {
+        const response = await fetch(`${API_BASE}/session/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+        testSessionId = data.sessionId;
+        showResult('session-result', data);
+      } catch (error) {
+        showResult('session-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Get Session
+    async function testGetSession() {
+      if (!testSessionId) {
+        alert('Create a session first!');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/session/${testSessionId}`);
+        const data = await response.json();
+        showResult('session-result', data);
+      } catch (error) {
+        showResult('session-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Save State
+    async function testSaveState() {
+      try {
+        const response = await fetch(`${API_BASE}/state/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'Test State ' + new Date().toLocaleTimeString(),
+            state: {
+              stack: [5, 10, 15],
+              registers: { AX: 20, BX: 30 }
+            }
+          })
+        });
+        const data = await response.json();
+        testStateId = data.stateId;
+        showResult('state-result', data);
+      } catch (error) {
+        showResult('state-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Load State
+    async function testLoadState() {
+      if (!testStateId) {
+        alert('Save a state first!');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/state/load/${testStateId}`);
+        const data = await response.json();
+        showResult('state-result', data);
+      } catch (error) {
+        showResult('state-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test List States
+    async function testListStates() {
+      try {
+        const response = await fetch(`${API_BASE}/state/list`);
+        const data = await response.json();
+        showResult('state-result', data);
+      } catch (error) {
+        showResult('state-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Convert
+    async function testConvert() {
+      try {
+        const response = await fetch(`${API_BASE}/convert`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            number: '1010',
+            fromBase: 2,
+            toBase: 16
+          })
+        });
+        const data = await response.json();
+        showResult('convert-result', data);
+      } catch (error) {
+        showResult('convert-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Binary Add
+    async function testBinaryAdd() {
+      try {
+        const response = await fetch(`${API_BASE}/binary/arithmetic`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operand1: '1010',
+            operand2: '0101',
+            operation: 'add'
+          })
+        });
+        const data = await response.json();
+        showResult('arithmetic-result', data);
+      } catch (error) {
+        showResult('arithmetic-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Binary Multiply
+    async function testBinaryMultiply() {
+      try {
+        const response = await fetch(`${API_BASE}/binary/arithmetic`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operand1: '110',
+            operand2: '11',
+            operation: 'multiply'
+          })
+        });
+        const data = await response.json();
+        showResult('arithmetic-result', data);
+      } catch (error) {
+        showResult('arithmetic-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Save Assembly
+    async function testSaveAssembly() {
+      try {
+        const response = await fetch(`${API_BASE}/assembly/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: 'MOV AX, 5\nPUSH AX\nPOP BX\nADD AX, BX',
+            description: 'Test Assembly Code'
+          })
+        });
+        const data = await response.json();
+        testAssemblyId = data.id;
+        showResult('assembly-result', data);
+      } catch (error) {
+        showResult('assembly-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Load Assembly
+    async function testLoadAssembly() {
+      if (!testAssemblyId) {
+        alert('Save assembly code first!');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/assembly/${testAssemblyId}`);
+        const data = await response.json();
+        showResult('assembly-result', data);
+      } catch (error) {
+        showResult('assembly-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Track Usage
+    async function testTrackUsage() {
+      try {
+        const response = await fetch(`${API_BASE}/analytics/track`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tool: 'backend-test',
+            action: 'test',
+            data: { testTime: new Date().toISOString() }
+          })
+        });
+        const data = await response.json();
+        showResult('analytics-result', data);
+      } catch (error) {
+        showResult('analytics-result', { error: error.message }, true);
+      }
+    }
+    
+    // Test Get Analytics
+    async function testGetAnalytics() {
+      try {
+        const response = await fetch(`${API_BASE}/analytics`);
+        const data = await response.json();
+        showResult('analytics-result', data);
+      } catch (error) {
+        showResult('analytics-result', { error: error.message }, true);
+      }
+    }
+    
+    // Check server status on load
+    checkServerStatus();
+  </script>
+</body>
+</html>

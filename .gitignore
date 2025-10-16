@@ -1,0 +1,47 @@
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary Files
+*.tmp
+*.temp
+~*
+
+# Environment
+.env
+.env.local
+
+# Backup Files
+*.bak
+*.backup
+
+# Test Files
+test_*.html
+remove_memmap.ps1
+
+# Work-in-progress Documentation
+MEMORY_*.md
+CANVAS_*.md
+*_SUMMARY.md
+*_GUIDE.md
+*_FIXES*.md
+*_IMPROVEMENTS.md
+*_BUGFIX.md
+
+# Backend Data
+node_modules/
+data/
+*.json.backup
+package-lock.json
