@@ -25,6 +25,8 @@
       <div class="tab" onclick="openTab(event, 'bcd-arithmetic')">BCD Arithmetic</div>
       <div class="tab" onclick="openTab(event, '8086-stack')">8086 Stack</div>
       <div class="tab" onclick="openTab(event, 'signed-numbers')">Signed Numbers</div>
+      <div class="tab" onclick="openTab(event, 'ieee754')">IEEE 754 Float</div>
+      <div class="tab" onclick="openTab(event, 'booths-algorithm')">Booth's Algorithm</div>
     </div>
 
     <!-- Number Converter Tab -->
@@ -233,9 +235,6 @@
       </div>
       <button class="btn" onclick="calculateBinaryArithmetic()">Calculate</button>
       <div id="binaryArithmeticResult" class="result" style="display:none;"></div>
-    </div>
-
-    <!-- Complement Calculator Tab -->
     </div>
 
     <!-- BCD Arithmetic Tab -->
@@ -483,6 +482,108 @@
             </div>
           </div>
 
+          <!-- Stack Animation Section -->
+          <div class="stack-animation-section" id="stackAnimationSection">
+            <div class="animation-header">
+              <h4>🎬 STACK ANIMATION</h4>
+              <div class="animation-subtitle">Real-time PUSH/POP Operations Visualization</div>
+            </div>
+
+            <!-- Animation Controls -->
+            <div class="animation-controls" id="animationControls">
+              <div class="control-group">
+                <button class="anim-control-btn play-btn" onclick="playAnimation()" id="playBtn">
+                  <span class="btn-icon">▶️</span>
+                  <span class="btn-text">Play</span>
+                </button>
+                <button class="anim-control-btn pause-btn" onclick="pauseAnimation()" id="pauseBtn" style="display: none;">
+                  <span class="btn-icon">⏸️</span>
+                  <span class="btn-text">Pause</span>
+                </button>
+                <button class="anim-control-btn" onclick="stepForward()">
+                  <span class="btn-icon">⏭️</span>
+                  <span class="btn-text">Step</span>
+                </button>
+                <button class="anim-control-btn" onclick="resetAnimation()">
+                  <span class="btn-icon">🔄</span>
+                  <span class="btn-text">Reset</span>
+                </button>
+              </div>
+
+              <div class="speed-control">
+                <label for="animSpeed">Speed:</label>
+                <select id="animSpeed" onchange="changeAnimationSpeed(this.value)">
+                  <option value="0.5">0.5x</option>
+                  <option value="1" selected>1x</option>
+                  <option value="2">2x</option>
+                </select>
+              </div>
+
+              <div class="animation-status">
+                <span class="status-label">Queue:</span>
+                <span class="status-value" id="queueCount">0</span>
+                <span class="status-label">| Current:</span>
+                <span class="status-value" id="currentOperation">None</span>
+              </div>
+            </div>
+
+            <!-- Animation Canvas -->
+            <div class="animation-canvas" id="animationCanvas">
+              <div class="canvas-header">
+                <div class="memory-addresses">
+                  <span class="addr-label">Memory Addresses</span>
+                </div>
+                <div class="stack-label">Stack Contents</div>
+                <div class="sp-label">SP →</div>
+              </div>
+
+              <div class="stack-visual-container" id="stackVisualContainer">
+                <!-- Stack blocks will be rendered here -->
+                <div class="stack-empty-state">
+                  <span class="empty-icon">📭</span>
+                  <p>Stack is empty. Perform PUSH operations to see animation.</p>
+                </div>
+              </div>
+
+              <!-- Animated Data Block (for PUSH/POP animations) -->
+              <div class="animated-data-block" id="animatedDataBlock" style="display: none;">
+                <div class="data-value">0</div>
+              </div>
+            </div>
+
+            <!-- Animation Info Panel -->
+            <div class="animation-info-panel">
+              <div class="info-card">
+                <div class="info-icon">📊</div>
+                <div class="info-content">
+                  <h5>Total Operations</h5>
+                  <p class="info-value" id="animTotalOps">0</p>
+                </div>
+              </div>
+              <div class="info-card">
+                <div class="info-icon">⬆️</div>
+                <div class="info-content">
+                  <h5>PUSH Count</h5>
+                  <p class="info-value" id="animPushCount">0</p>
+                </div>
+              </div>
+              <div class="info-card">
+                <div class="info-icon">⬇️</div>
+                <div class="info-content">
+                  <h5>POP Count</h5>
+                  <p class="info-value" id="animPopCount">0</p>
+                </div>
+              </div>
+              <div class="info-card">
+                <div class="info-icon">📏</div>
+                <div class="info-content">
+                  <h5>Stack Height</h5>
+                  <p class="info-value" id="animStackHeight">0</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Bottom section - Instructions -->
           <div class="instructions-section">
             <h4>8086 STACK OPERATIONS GUIDE</h4>
@@ -641,6 +742,668 @@
       </div>
     </div>
     </div>  <!-- Close signed-numbers tab-content -->
+
+    <!-- IEEE 754 Floating-Point Tab -->
+    <div id="ieee754" class="tab-content">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Single Precision (32-bit) -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">IEEE 754 Single (32-bit)</h3>
+          <label for="singleInput">Input</label>
+          <input id="singleInput" type="text" placeholder="Enter decimal or 32-bit binary..." autocomplete="off" />
+          <label for="singleInputType">Conversion Type</label>
+          <div class="modern-dropdown" id="singleInputTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Decimal → IEEE 754</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="decimal" class="selected">Decimal → IEEE 754</li>
+              <li data-value="binary">IEEE 754 → Decimal</li>
+            </ul>
+            <input type="hidden" id="singleInputType" value="decimal">
+          </div>
+          <button class="btn" onclick="convertSinglePrecision()">Convert</button>
+          <div id="singleResult" class="result" style="display:none;"></div>
+          <div id="singleSteps" class="steps" style="display:none;"></div>
+        </div>
+
+        <!-- Double Precision (64-bit) -->
+        <div>
+          <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">IEEE 754 Double (64-bit)</h3>
+          <label for="doubleInput">Input</label>
+          <input id="doubleInput" type="text" placeholder="Enter decimal or 64-bit binary..." autocomplete="off" />
+          <label for="doubleInputType">Conversion Type</label>
+          <div class="modern-dropdown" id="doubleInputTypeWrapper">
+            <div class="dropdown-selected" tabindex="0">
+              <span class="selected-text">Decimal → IEEE 754</span>
+              <svg class="dropdown-arrow" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <ul class="dropdown-list">
+              <li data-value="decimal" class="selected">Decimal → IEEE 754</li>
+              <li data-value="binary">IEEE 754 → Decimal</li>
+            </ul>
+            <input type="hidden" id="doubleInputType" value="decimal">
+          </div>
+          <button class="btn" onclick="convertDoublePrecision()">Convert</button>
+          <div id="doubleResult" class="result" style="display:none;"></div>
+          <div id="doubleSteps" class="steps" style="display:none;"></div>
+        </div>
+      </div>
+    </div>  <!-- Close ieee754 tab-content -->
+
+    <!-- Booth's Algorithm Tab -->
+    <div id="booths-algorithm" class="tab-content">
+      <h3 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem;">Booth's Multiplication Algorithm</h3>
+      
+      <!-- Input Section -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <label for="boothMultiplicand">Multiplicand (M)</label>
+          <input id="boothMultiplicand" type="text" placeholder="Enter number (e.g., 7)" autocomplete="off" />
+        </div>
+        <div>
+          <label for="boothMultiplier">Multiplier (Q)</label>
+          <input id="boothMultiplier" type="text" placeholder="Enter number (e.g., 3)" autocomplete="off" />
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label for="boothBitWidth">Bit Width</label>
+        <select id="boothBitWidth" style="width: 100%; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; font-family: 'Poppins', sans-serif;">
+          <option value="4">4-bit</option>
+          <option value="8" selected>8-bit</option>
+          <option value="16">16-bit</option>
+        </select>
+      </div>
+
+      <!-- Control Buttons -->
+      <div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <button class="btn" onclick="calculateBooths()" style="flex: 1; min-width: 130px; font-size: 1rem; padding: 0.85rem;">📊 Show Overview</button>
+        <button class="btn" id="navigateStepsBtn" onclick="navigateSteps()" style="flex: 1; min-width: 130px; display: none; font-size: 1rem; padding: 0.85rem;">▶️ Navigate Steps</button>
+        <button class="btn" onclick="resetBooths()" style="flex: 1; min-width: 130px; background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); font-size: 1rem; padding: 0.85rem;">🔄 Reset</button>
+      </div>
+      
+      <!-- Step Navigation Controls (shown during navigation) -->
+      <div id="stepNavControls" style="display: none; background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); padding: 1.25rem; border-radius: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 24px 0 rgba(99,102,241,0.25); border: 2px solid rgba(255,255,255,0.2); scroll-margin-top: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <button onclick="previousStep()" id="prevBtn" class="nav-step-btn" style="background: white; color: #6366f1; border: none; border-radius: 1rem; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-family: 'Poppins', sans-serif; min-width: 120px;">⬅️ PREVIOUS</button>
+          <div style="text-align: center; color: white; font-weight: 700; font-family: 'Poppins', sans-serif;">
+            <div style="font-size: 0.8rem; opacity: 0.95; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.25rem;">Step Navigation</div>
+            <div style="font-size: 1.5rem; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+              <span id="navCurrentStep">0</span> <span style="opacity: 0.7;">/</span> <span id="navTotalSteps">0</span>
+            </div>
+          </div>
+          <button onclick="nextStep()" id="nextBtn" class="nav-step-btn" style="background: white; color: #6366f1; border: none; border-radius: 1rem; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); font-family: 'Poppins', sans-serif; min-width: 120px;">NEXT ➡️</button>
+        </div>
+        <div style="background: rgba(255,255,255,0.25); height: 10px; border-radius: 1rem; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+          <div id="progressBar" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);"></div>
+        </div>
+      </div>
+
+      <!-- Result Display -->
+      <div id="boothResult" style="display:none; background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%); padding: 1.5rem; border-radius: 1.2rem; border: 3px solid #10b981; margin-bottom: 1.5rem; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2); animation: slideInUp 0.5s ease-out;">
+        <h4 style="color: #10b981; margin-bottom: 1rem; font-size: 1.2rem; font-weight: 800; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+          <span style="font-size: 1.5rem; animation: bounce 2s infinite;">🎉</span> Final Result
+        </h4>
+        <div style="font-family: 'Poppins', sans-serif; background: white; padding: 1.25rem; border-radius: 0.75rem; box-shadow: inset 0 2px 6px rgba(0,0,0,0.05);">
+          <span id="boothFinalResult"></span>
+        </div>
+      </div>
+
+      <!-- Registers Display -->
+      <div id="boothRegisters" style="display:none; margin-bottom: 1.5rem; animation: slideInUp 0.5s ease-out;">
+        <h4 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; font-family: 'Poppins', sans-serif;">📊 Current Registers</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+          <div class="register-card" id="registerACard" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 1.25rem; border-radius: 1.2rem; border: 2px solid #fbbf24; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 4rem; opacity: 0.1;">🟨</div>
+            <div style="font-size: 0.75rem; color: #92400e; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">
+              Accumulator (A)
+            </div>
+            <div id="registerA" style="font-family: 'Courier New', monospace; font-size: 1.15rem; color: #78350f; font-weight: 700; letter-spacing: 0.15rem; text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.7); border-radius: 0.75rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 1;"></div>
+          </div>
+          <div class="register-card" id="registerQCard" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 1.25rem; border-radius: 1.2rem; border: 2px solid #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 4rem; opacity: 0.1;">🟦</div>
+            <div style="font-size: 0.75rem; color: #1e40af; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">
+              Multiplier (Q)
+            </div>
+            <div id="registerQ" style="font-family: 'Courier New', monospace; font-size: 1.15rem; color: #1e3a8a; font-weight: 700; letter-spacing: 0.15rem; text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.7); border-radius: 0.75rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 1;"></div>
+          </div>
+          <div class="register-card" id="registerQ1Card" style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 1.25rem; border-radius: 1.2rem; border: 2px solid #ec4899; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 4rem; opacity: 0.1;">🟪</div>
+            <div style="font-size: 0.75rem; color: #9f1239; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">
+              Extra Bit (Q-1)
+            </div>
+            <div id="registerQ1" style="font-family: 'Courier New', monospace; font-size: 1.15rem; color: #831843; font-weight: 700; letter-spacing: 0.15rem; text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.7); border-radius: 0.75rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 1;"></div>
+          </div>
+          <div class="register-card" id="registerMCard" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 1.25rem; border-radius: 1.2rem; border: 2px solid #6366f1; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); transition: all 0.3s ease; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -20px; right: -20px; font-size: 4rem; opacity: 0.1;">🔷</div>
+            <div style="font-size: 0.75rem; color: #4338ca; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">
+              Multiplicand (M)
+            </div>
+            <div id="registerM" style="font-family: 'Courier New', monospace; font-size: 1.15rem; color: #3730a3; font-weight: 700; letter-spacing: 0.15rem; text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.7); border-radius: 0.75rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 1;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        @keyframes slideInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+          }
+          50% {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+          }
+        }
+        .register-card:hover {
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+        }
+        .register-highlight {
+          animation: pulse 1s ease-in-out 2;
+        }
+        .nav-step-btn:hover:not(:disabled) {
+          background: #f0f9ff !important;
+          color: #1e40af !important;
+          transform: translateY(-2px) scale(1.05);
+          box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4) !important;
+        }
+        .nav-step-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none !important;
+        }
+        #prevBtn:disabled, #nextBtn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          transform: none !important;
+        }
+      </style>
+
+      <!-- Current Step Info -->
+      <div id="boothStepInfo" style="display:none; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 1.5rem; border-radius: 1.2rem; border: 2px solid #3b82f6; margin-bottom: 1.5rem; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15); animation: slideInUp 0.5s ease-out;">
+        <h4 style="color: #3b82f6; margin-bottom: 1rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.75rem; font-family: 'Poppins', sans-serif; font-weight: 700;">
+          <span style="font-size: 1.5rem; animation: bounce 2s infinite;">💡</span> 
+          <span>Current Step:</span>
+          <span id="currentStepNum" style="background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 0.4rem 1rem; border-radius: 0.75rem; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); font-weight: 800;">0</span>
+        </h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+          <div style="background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="color: #1e40af; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">Q Q-1 Bits</div>
+            <div id="currentBits" style="font-family: 'Courier New', monospace; font-weight: 800; font-size: 1.5rem; color: #3b82f6; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 0.5rem; border-radius: 0.5rem; text-align: center; border: 2px solid #3b82f6;"></div>
+          </div>
+          <div style="background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="color: #047857; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Poppins', sans-serif;">Operation</div>
+            <div id="currentOperation" style="font-weight: 700; color: #059669; font-size: 1.1rem; font-family: 'Poppins', sans-serif; text-align: center;"></div>
+          </div>
+        </div>
+        <div style="background: white; padding: 1.25rem; border-radius: 0.75rem; border-left: 5px solid #3b82f6; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+          <div style="font-size: 0.7rem; color: #6366f1; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; font-family: 'Poppins', sans-serif;">📝 Step Explanation</div>
+          <div id="stepExplanation" style="font-size: 0.95rem; color: #1e3a8a; line-height: 1.7; font-family: 'Poppins', sans-serif;"></div>
+        </div>
+      </div>
+      
+      <style>
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+      </style>
+
+      <!-- Stack Animation Styles -->
+      <style>
+        /* Stack Animation Section */
+        .stack-animation-section {
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+          padding: 2rem;
+          border-radius: 1.2rem;
+          margin: 2rem 0;
+          border: 2px solid #e0e7ff;
+          box-shadow: 0 8px 24px rgba(99, 102, 241, 0.08);
+        }
+
+        .animation-header {
+          text-align: center;
+          margin-bottom: 2rem;
+        }
+
+        .animation-header h4 {
+          color: #6366f1;
+          font-family: 'Poppins', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+
+        .animation-subtitle {
+          color: #64748b;
+          font-size: 0.95rem;
+          margin-bottom: 1rem;
+        }
+
+        /* Animation Controls */
+        .animation-controls {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          margin-bottom: 1.5rem;
+          border: 2px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .control-group {
+          display: flex;
+          gap: 0.75rem;
+          flex: 1;
+          min-width: 280px;
+        }
+
+        .anim-control-btn {
+          background: white;
+          border: 2px solid #e5e7eb;
+          padding: 0.7rem 1.2rem;
+          border-radius: 0.7rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #475569;
+        }
+
+        .anim-control-btn:hover {
+          background: #f8fafc;
+          border-color: #6366f1;
+          color: #6366f1;
+          transform: translateY(-1px);
+        }
+
+        .anim-control-btn.play-btn:hover {
+          background: #dcfce7;
+          border-color: #10b981;
+          color: #10b981;
+        }
+
+        .anim-control-btn.pause-btn:hover {
+          background: #fef3c7;
+          border-color: #f59e0b;
+          color: #f59e0b;
+        }
+
+        .speed-control {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          color: #475569;
+        }
+
+        .speed-control select {
+          padding: 0.5rem 1rem;
+          border: 2px solid #e5e7eb;
+          border-radius: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .speed-control select:hover {
+          border-color: #6366f1;
+        }
+
+        .animation-status {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.9rem;
+          padding: 0.7rem 1.2rem;
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          border-radius: 0.7rem;
+          border: 2px solid #bfdbfe;
+        }
+
+        .status-label {
+          color: #64748b;
+          font-weight: 600;
+        }
+
+        .status-value {
+          color: #3b82f6;
+          font-weight: 700;
+        }
+
+        /* Animation Canvas */
+        .animation-canvas {
+          background: white;
+          padding: 2rem;
+          border-radius: 1rem;
+          margin-bottom: 1.5rem;
+          border: 2px solid #e5e7eb;
+          min-height: 400px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .canvas-header {
+          display: grid;
+          grid-template-columns: 120px 1fr 80px;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #e5e7eb;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .stack-visual-container {
+          min-height: 300px;
+          position: relative;
+        }
+
+        .stack-empty-state {
+          text-align: center;
+          padding: 3rem 1rem;
+          color: #94a3b8;
+        }
+
+        .empty-icon {
+          font-size: 4rem;
+          display: block;
+          margin-bottom: 1rem;
+          animation: bounce 2s infinite;
+        }
+
+        .stack-empty-state p {
+          font-family: 'Poppins', sans-serif;
+          font-size: 1rem;
+        }
+
+        /* Stack Block Styles */
+        .stack-block {
+          display: grid;
+          grid-template-columns: 120px 1fr 80px;
+          gap: 1rem;
+          margin-bottom: 0.75rem;
+          transition: all 0.3s ease;
+        }
+
+        .stack-block.active {
+          transform: scale(1.02);
+        }
+
+        .memory-addr {
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+          padding: 0.9rem 1rem;
+          border-radius: 0.6rem;
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #475569;
+          text-align: center;
+          border: 2px solid #cbd5e1;
+        }
+
+        .stack-data {
+          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+          padding: 0.9rem 1.2rem;
+          border-radius: 0.6rem;
+          font-family: 'Courier New', monospace;
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: #3b82f6;
+          text-align: center;
+          border: 2px solid #93c5fd;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .stack-data::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .stack-data.push-anim {
+          animation: pushSlide 0.5s ease-out;
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+          border-color: #86efac;
+        }
+
+        .stack-data.push-anim::before {
+          left: 100%;
+        }
+
+        .stack-data.pop-anim {
+          animation: popSlide 0.5s ease-out;
+          background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+          border-color: #fca5a5;
+        }
+
+        .sp-indicator {
+          background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+          padding: 0.9rem 1rem;
+          border-radius: 0.6rem;
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #92400e;
+          text-align: center;
+          border: 2px solid #fbbf24;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: pulse 1s ease-in-out 2;
+        }
+
+        .sp-indicator.active {
+          animation: pulse 1s ease-in-out infinite;
+        }
+
+        /* Animated Data Block (floating element) */
+        .animated-data-block {
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+          padding: 1rem 1.5rem;
+          border-radius: 0.8rem;
+          border: 3px solid #10b981;
+          font-family: 'Courier New', monospace;
+          font-size: 1.2rem;
+          font-weight: 700;
+          color: #065f46;
+          box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+          z-index: 10;
+        }
+
+        .data-value {
+          text-align: center;
+        }
+
+        /* Animation Keyframes */
+        @keyframes pushSlide {
+          0% {
+            transform: translateY(-30px);
+            opacity: 0;
+          }
+          100% {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes popSlide {
+          0% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translateY(-15px) scale(1.05);
+            opacity: 0.7;
+          }
+          100% {
+            transform: translateY(-30px) scale(0.8);
+            opacity: 0;
+          }
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+          }
+          50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+          }
+        }
+
+        @keyframes glow {
+          0%, 100% {
+            box-shadow: 0 0 5px rgba(99, 102, 241, 0.5);
+          }
+          50% {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.8);
+          }
+        }
+
+        /* Animation Info Panel */
+        .animation-info-panel {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 1rem;
+        }
+
+        .info-card {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 1rem;
+          border: 2px solid #e5e7eb;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+          border-color: #6366f1;
+        }
+
+        .info-icon {
+          font-size: 2rem;
+        }
+
+        .info-content h5 {
+          font-family: 'Poppins', sans-serif;
+          font-size: 0.85rem;
+          color: #64748b;
+          margin-bottom: 0.3rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .info-value {
+          font-family: 'Poppins', sans-serif;
+          font-size: 1.5rem;
+          color: #3b82f6;
+          font-weight: 700;
+          margin: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .animation-controls {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .control-group {
+            min-width: 100%;
+          }
+
+          .canvas-header {
+            grid-template-columns: 100px 1fr 70px;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+          }
+
+          .stack-block {
+            grid-template-columns: 100px 1fr 70px;
+            gap: 0.5rem;
+          }
+
+          .animation-info-panel {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+          }
+        }
+      </style>
+
+      <!-- Operation History Table -->
+      <div id="boothHistory" style="display:none; animation: slideInUp 0.6s ease-out;">
+        <h4 style="color: #6366f1; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700; font-family: 'Poppins', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1.3rem;">📜</span> Operation History
+        </h4>
+        <div style="overflow-x: auto; border-radius: 1rem; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 2px solid #e0e7ff;">
+          <table id="boothTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; background: white;">
+            <thead>
+              <tr style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%); color: white;">
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Step</th>
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Q Q-1</th>
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Operation</th>
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">A</th>
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Q</th>
+                <th style="padding: 0.85rem; border: none; text-align: center; font-weight: 700; font-family: 'Poppins', sans-serif; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">Q-1</th>
+              </tr>
+            </thead>
+            <tbody id="boothTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>  <!-- Close booths-algorithm tab-content -->
+
   </div>  <!-- Close container -->
 
   <div class="footer">Made with ❤️ by Atrishman Mukherjee | COA Educational Tools © 2025</div>

@@ -562,6 +562,9 @@ function initStackCalculator() {
   initMemoryViewer();
   updateSignedRepresentations();
   
+  // Initialize stack animation
+  initStackAnimation();
+  
   console.log('8086 processor initialized');
 }
 
@@ -761,6 +764,12 @@ function pushToStack() {
     return;
   }
   
+  // Check if animation mode is enabled
+  if (stackAnimationState.enabled) {
+    // Queue animation instead of immediate execution
+    queueAnimation('PUSH', value);
+  }
+  
   // 8086 PUSH operation
   stackMemory.push(value);
   registers.SP--;  // Stack pointer decreases (stack grows downward)
@@ -795,6 +804,12 @@ function popFromStack() {
     addToHistory('Stack Underflow!');
     alert('Stack Underflow! Stack is empty.');
     return;
+  }
+  
+  // Check if animation mode is enabled
+  if (stackAnimationState.enabled) {
+    // Queue animation instead of immediate execution
+    queueAnimation('POP', null);
   }
   
   // 8086 POP operation
@@ -1312,6 +1327,8 @@ document.addEventListener('DOMContentLoaded', function() {
   initDropdown('signMagInputTypeWrapper');
   initDropdown('onesCompInputTypeWrapper');
   initDropdown('twosCompInputTypeWrapper');
+  initDropdown('singleInputTypeWrapper');
+  initDropdown('doubleInputTypeWrapper');
   
   // Close dropdowns when clicking outside
   document.onclick = function(e) {
@@ -1320,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         d.classList.remove('open');
       });
       // Remove all scroll listeners when closing dropdowns
-      const allDropdowns = ['fromBaseWrapper', 'toBaseWrapper', 'greyTypeWrapper', 'bcdTypeWrapper', 'excess3TypeWrapper', 'asciiTypeWrapper', 'parityTypeWrapper', 'operationWrapper', 'complementTypeWrapper', 'bcdOperationWrapper', 'signMagInputTypeWrapper', 'onesCompInputTypeWrapper', 'twosCompInputTypeWrapper'];
+      const allDropdowns = ['fromBaseWrapper', 'toBaseWrapper', 'greyTypeWrapper', 'bcdTypeWrapper', 'excess3TypeWrapper', 'asciiTypeWrapper', 'parityTypeWrapper', 'operationWrapper', 'complementTypeWrapper', 'bcdOperationWrapper', 'signMagInputTypeWrapper', 'onesCompInputTypeWrapper', 'twosCompInputTypeWrapper', 'singleInputTypeWrapper', 'doubleInputTypeWrapper'];
       // Note: We can't easily remove specific listeners here, but they'll be cleaned up when dropdowns are reopened
     }
   };
@@ -1902,3 +1919,1256 @@ function convertTwosComplement() {
   stepsDiv.innerHTML = stepsHTML;
   stepsDiv.style.display = 'block';
 }
+
+// IEEE 754 Single Precision (32-bit) Converter
+function convertSinglePrecision() {
+  const inputType = document.getElementById('singleInputType').value;
+  const input = document.getElementById('singleInput').value.trim();
+  const resultDiv = document.getElementById('singleResult');
+  const stepsDiv = document.getElementById('singleSteps');
+
+  if (!input) {
+    alert('Please enter a value');
+    return;
+  }
+
+  resultDiv.style.display = 'none';
+  stepsDiv.style.display = 'none';
+  
+  try {
+    if (inputType === 'decimal') {
+      convertDecimalToSingle(parseFloat(input), resultDiv, stepsDiv);
+    } else {
+      convertSingleToDecimal(input, resultDiv, stepsDiv);
+    }
+  } catch (error) {
+    alert('Invalid input: ' + error.message);
+  }
+}
+
+// Convert Decimal to IEEE 754 Single Precision
+function convertDecimalToSingle(decimal, resultDiv, stepsDiv) {
+  let stepsHTML = '<h4 style="color: #6366f1; font-size: 0.9rem;">Conversion Steps:</h4>';
+  
+  // Handle special cases
+  if (decimal === 0) {
+    const signBit = Object.is(decimal, -0) ? '1' : '0';
+    const ieee754 = signBit + '00000000' + '00000000000000000000000';
+    displaySingleResult(ieee754, '0.0', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #f0f9ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Zero:</strong> Sign=${signBit}, Exponent=00000000, Mantissa=00000000000000000000000
+      </div>`);
+    return;
+  }
+
+  if (!isFinite(decimal)) {
+    const signBit = decimal > 0 ? '0' : '1';
+    const ieee754 = signBit + '11111111' + '00000000000000000000000';
+    displaySingleResult(ieee754, decimal > 0 ? '+Infinity' : '-Infinity', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #fef3c7; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Infinity:</strong> Sign=${signBit}, Exponent=11111111 (all 1s), Mantissa=00000000000000000000000 (all 0s)
+      </div>`);
+    return;
+  }
+
+  if (isNaN(decimal)) {
+    const ieee754 = '0' + '11111111' + '10000000000000000000000';
+    displaySingleResult(ieee754, 'NaN', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #fee2e2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>NaN:</strong> Exponent=11111111 (all 1s), Mantissa≠0
+      </div>`);
+    return;
+  }
+
+  // Step 1: Determine sign
+  const signBit = decimal < 0 ? '1' : '0';
+  const absValue = Math.abs(decimal);
+  stepsHTML += `<div style="background: #fef2f2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 1: Sign Bit</strong><br/>
+    ${decimal} is ${decimal < 0 ? 'negative' : 'positive'} → Sign = <span style="color: #ef4444; font-weight: 700;">${signBit}</span>
+  </div>`;
+
+  // Step 2: Convert to binary
+  const intPart = Math.floor(absValue);
+  const fracPart = absValue - intPart;
+  
+  let intBinary = intPart === 0 ? '0' : intPart.toString(2);
+  let fracBinary = '';
+  let tempFrac = fracPart;
+  
+  for (let i = 0; i < 50 && tempFrac !== 0; i++) {
+    tempFrac *= 2;
+    if (tempFrac >= 1) {
+      fracBinary += '1';
+      tempFrac -= 1;
+    } else {
+      fracBinary += '0';
+    }
+  }
+  
+  stepsHTML += `<div style="background: #f0fdf4; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 2: Convert to Binary</strong><br/>
+    Integer part: ${intPart} = <span style="color: #059669;">${intBinary}</span><br/>
+    Fractional part: 0.${fracPart.toString().split('.')[1] || '0'} ≈ <span style="color: #059669;">0.${fracBinary}</span>
+  </div>`;
+
+  // Step 3: Normalize
+  let exponent = 0;
+  let mantissa = '';
+  
+  if (intPart >= 1) {
+    exponent = intBinary.length - 1;
+    mantissa = intBinary.substring(1) + fracBinary;
+  } else {
+    let firstOne = fracBinary.indexOf('1');
+    exponent = -(firstOne + 1);
+    mantissa = fracBinary.substring(firstOne + 1);
+  }
+  
+  const normalizedBinary = `1.${mantissa.substring(0, 30)}`;
+  stepsHTML += `<div style="background: #eff6ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 3: Normalize</strong><br/>
+    ${intBinary}.${fracBinary} = ${normalizedBinary} × 2<sup>${exponent}</sup>
+  </div>`;
+
+  // Step 4: Calculate biased exponent
+  const biasedExponent = exponent + 127;
+  const exponentBits = biasedExponent.toString(2).padStart(8, '0');
+  
+  stepsHTML += `<div style="background: #dbeafe; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 4: Biased Exponent</strong><br/>
+    Exponent: ${exponent} + Bias(127) = ${biasedExponent}<br/>
+    Binary: <span style="color: #3b82f6; font-weight: 700;">${exponentBits}</span>
+  </div>`;
+
+  // Step 5: Extract mantissa
+  const mantissaBits = mantissa.padEnd(23, '0').substring(0, 23);
+  
+  stepsHTML += `<div style="background: #d1fae5; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 5: Mantissa (23 bits)</strong><br/>
+    After "1." : <span style="color: #10b981; font-weight: 700;">${mantissaBits}</span>
+  </div>`;
+
+  // Final IEEE 754 representation
+  const ieee754 = signBit + exponentBits + mantissaBits;
+  displaySingleResult(ieee754, decimal.toString(), resultDiv, stepsDiv, stepsHTML);
+}
+
+// Convert IEEE 754 Single Precision to Decimal
+function convertSingleToDecimal(binary, resultDiv, stepsDiv) {
+  if (!/^[01]{32}$/.test(binary)) {
+    throw new Error('Binary must be exactly 32 bits (0s and 1s)');
+  }
+
+  let stepsHTML = '<h4 style="color: #6366f1; font-size: 0.9rem;">Conversion Steps:</h4>';
+  
+  // Extract components
+  const signBit = binary[0];
+  const exponentBits = binary.substring(1, 9);
+  const mantissaBits = binary.substring(9, 32);
+  
+  stepsHTML += `<div style="background: #f3f4f6; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 1: Extract Bits</strong><br/>
+    Sign: <span style="color: #ef4444; font-weight: 700;">${signBit}</span> |
+    Exponent: <span style="color: #3b82f6; font-weight: 700;">${exponentBits}</span> |
+    Mantissa: <span style="color: #10b981; font-weight: 700;">${mantissaBits}</span>
+  </div>`;
+
+  const exponentValue = parseInt(exponentBits, 2);
+  
+  // Check special cases
+  if (exponentValue === 255) {
+    const isZeroMantissa = mantissaBits === '00000000000000000000000';
+    if (isZeroMantissa) {
+      const result = signBit === '0' ? '+Infinity' : '-Infinity';
+      displaySingleResult(binary, result, resultDiv, stepsDiv, stepsHTML + 
+        `<div style="background: #fef3c7; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+          <strong>Infinity Detected:</strong> Exponent = 255, Mantissa = 0
+        </div>`);
+    } else {
+      displaySingleResult(binary, 'NaN', resultDiv, stepsDiv, stepsHTML + 
+        `<div style="background: #fee2e2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+          <strong>NaN Detected:</strong> Exponent = 255, Mantissa ≠ 0
+        </div>`);
+    }
+    return;
+  }
+
+  if (exponentValue === 0 && mantissaBits === '00000000000000000000000') {
+    const result = signBit === '0' ? '+0' : '-0';
+    displaySingleResult(binary, result, resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #f0f9ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Zero Detected:</strong> All bits are 0 except possibly sign
+      </div>`);
+    return;
+  }
+
+  // Calculate actual exponent
+  const actualExponent = exponentValue - 127;
+  stepsHTML += `<div style="background: #dbeafe; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 2: Calculate Exponent</strong><br/>
+    ${exponentValue} - Bias(127) = <span style="color: #3b82f6; font-weight: 700;">${actualExponent}</span>
+  </div>`;
+
+  // Calculate mantissa value
+  let mantissaValue = 1.0; // Implied leading 1
+  for (let i = 0; i < mantissaBits.length; i++) {
+    if (mantissaBits[i] === '1') {
+      mantissaValue += Math.pow(2, -(i + 1));
+    }
+  }
+  
+  stepsHTML += `<div style="background: #d1fae5; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 3: Calculate Mantissa</strong><br/>
+    1.${mantissaBits} = <span style="color: #10b981; font-weight: 700;">${mantissaValue.toFixed(10)}</span>
+  </div>`;
+
+  // Calculate final value
+  const decimalValue = (signBit === '1' ? -1 : 1) * mantissaValue * Math.pow(2, actualExponent);
+  
+  stepsHTML += `<div style="background: #f3f4f6; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 4: Final Calculation</strong><br/>
+    ${signBit === '1' ? '-' : '+'}${mantissaValue.toFixed(6)} × 2<sup>${actualExponent}</sup> = <span style="font-weight: 700;">${decimalValue}</span>
+  </div>`;
+
+  displaySingleResult(binary, decimalValue.toString(), resultDiv, stepsDiv, stepsHTML);
+}
+
+// Display Single Precision Result
+function displaySingleResult(ieee754, decimal, resultDiv, stepsDiv, stepsHTML) {
+  const signBit = ieee754[0];
+  const exponentBits = ieee754.substring(1, 9);
+  const mantissaBits = ieee754.substring(9, 32);
+  
+  // Calculate hex representation
+  const hex = parseInt(ieee754, 2).toString(16).toUpperCase().padStart(8, '0');
+  
+  resultDiv.innerHTML = `
+    <h4 style="color: #6366f1; font-size: 0.9rem; margin-bottom: 0.5rem;">Result:</h4>
+    <div style="background: #f9fafb; padding: 0.8rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; margin-bottom: 0.5rem;">
+      <div style="font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Decimal:</strong> <span style="color: #059669; font-weight: 700;">${decimal}</span></div>
+      <div style="font-size: 0.75rem; margin-bottom: 0.5rem; word-break: break-all; font-family: 'Courier New', monospace;">
+        <strong>IEEE 754:</strong> 
+        <span style="color: #ef4444; font-weight: 700;">${signBit}</span>
+        <span style="color: #3b82f6; font-weight: 700;">${exponentBits}</span>
+        <span style="color: #10b981; font-weight: 700;">${mantissaBits}</span>
+      </div>
+      <div style="font-size: 0.75rem; font-family: 'Courier New', monospace;">
+        <strong>Hexadecimal:</strong> <span style="color: #7c3aed; font-weight: 700;">0x${hex}</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; font-size: 0.75rem;">
+      <div style="background: #fef2f2; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #ef4444; font-weight: 700;">Sign</div>
+        <div style="font-family: 'Courier New', monospace;">${signBit}</div>
+      </div>
+      <div style="background: #eff6ff; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #3b82f6; font-weight: 700;">Exponent (8)</div>
+        <div style="font-family: 'Courier New', monospace;">${exponentBits}</div>
+      </div>
+      <div style="background: #f0fdf4; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #10b981; font-weight: 700;">Mantissa (23)</div>
+        <div style="font-family: 'Courier New', monospace; font-size: 0.7rem;">${mantissaBits}</div>
+      </div>
+    </div>`;
+  
+  resultDiv.style.display = 'block';
+  stepsDiv.innerHTML = stepsHTML;
+  stepsDiv.style.display = 'block';
+}
+
+// IEEE 754 Double Precision (64-bit) Converter
+function convertDoublePrecision() {
+  const inputType = document.getElementById('doubleInputType').value;
+  const input = document.getElementById('doubleInput').value.trim();
+  const resultDiv = document.getElementById('doubleResult');
+  const stepsDiv = document.getElementById('doubleSteps');
+
+  if (!input) {
+    alert('Please enter a value');
+    return;
+  }
+
+  resultDiv.style.display = 'none';
+  stepsDiv.style.display = 'none';
+  
+  try {
+    if (inputType === 'decimal') {
+      convertDecimalToDouble(parseFloat(input), resultDiv, stepsDiv);
+    } else {
+      convertDoubleToDecimal(input, resultDiv, stepsDiv);
+    }
+  } catch (error) {
+    alert('Invalid input: ' + error.message);
+  }
+}
+
+// Convert Decimal to IEEE 754 Double Precision
+function convertDecimalToDouble(decimal, resultDiv, stepsDiv) {
+  let stepsHTML = '<h4 style="color: #6366f1; font-size: 0.9rem;">Conversion Steps:</h4>';
+  
+  // Handle special cases
+  if (decimal === 0) {
+    const signBit = Object.is(decimal, -0) ? '1' : '0';
+    const ieee754 = signBit + '00000000000'.padEnd(12, '0') + '0000000000000000000000000000000000000000000000000000';
+    displayDoubleResult(ieee754, '0.0', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #f0f9ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Zero:</strong> All bits are 0
+      </div>`);
+    return;
+  }
+
+  if (!isFinite(decimal)) {
+    const signBit = decimal > 0 ? '0' : '1';
+    const ieee754 = signBit + '11111111111' + '0000000000000000000000000000000000000000000000000000';
+    displayDoubleResult(ieee754, decimal > 0 ? '+Infinity' : '-Infinity', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #fef3c7; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Infinity:</strong> Exponent = all 1s, Mantissa = all 0s
+      </div>`);
+    return;
+  }
+
+  if (isNaN(decimal)) {
+    const ieee754 = '0' + '11111111111' + '1000000000000000000000000000000000000000000000000000';
+    displayDoubleResult(ieee754, 'NaN', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #fee2e2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>NaN:</strong> Exponent = all 1s, Mantissa ≠ 0
+      </div>`);
+    return;
+  }
+
+  // Step 1: Determine sign
+  const signBit = decimal < 0 ? '1' : '0';
+  const absValue = Math.abs(decimal);
+  stepsHTML += `<div style="background: #fef2f2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 1: Sign Bit</strong><br/>
+    ${decimal} is ${decimal < 0 ? 'negative' : 'positive'} → Sign = <span style="color: #ef4444; font-weight: 700;">${signBit}</span>
+  </div>`;
+
+  // Step 2: Convert to binary
+  const intPart = Math.floor(absValue);
+  const fracPart = absValue - intPart;
+  
+  let intBinary = intPart === 0 ? '0' : intPart.toString(2);
+  let fracBinary = '';
+  let tempFrac = fracPart;
+  
+  for (let i = 0; i < 60 && tempFrac !== 0; i++) {
+    tempFrac *= 2;
+    if (tempFrac >= 1) {
+      fracBinary += '1';
+      tempFrac -= 1;
+    } else {
+      fracBinary += '0';
+    }
+  }
+  
+  stepsHTML += `<div style="background: #f0fdf4; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 2: Convert to Binary</strong><br/>
+    Integer: ${intPart} = ${intBinary}<br/>
+    Fractional: 0.${fracPart.toString().split('.')[1] || '0'} ≈ 0.${fracBinary.substring(0, 20)}...
+  </div>`;
+
+  // Step 3: Normalize
+  let exponent = 0;
+  let mantissa = '';
+  
+  if (intPart >= 1) {
+    exponent = intBinary.length - 1;
+    mantissa = intBinary.substring(1) + fracBinary;
+  } else {
+    let firstOne = fracBinary.indexOf('1');
+    exponent = -(firstOne + 1);
+    mantissa = fracBinary.substring(firstOne + 1);
+  }
+  
+  stepsHTML += `<div style="background: #eff6ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 3: Normalize</strong><br/>
+    1.${mantissa.substring(0, 20)}... × 2<sup>${exponent}</sup>
+  </div>`;
+
+  // Step 4: Calculate biased exponent
+  const biasedExponent = exponent + 1023;
+  const exponentBits = biasedExponent.toString(2).padStart(11, '0');
+  
+  stepsHTML += `<div style="background: #dbeafe; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 4: Biased Exponent</strong><br/>
+    ${exponent} + Bias(1023) = ${biasedExponent}<br/>
+    Binary: <span style="color: #3b82f6; font-weight: 700;">${exponentBits}</span>
+  </div>`;
+
+  // Step 5: Extract mantissa
+  const mantissaBits = mantissa.padEnd(52, '0').substring(0, 52);
+  
+  stepsHTML += `<div style="background: #d1fae5; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 5: Mantissa (52 bits)</strong><br/>
+    <span style="color: #10b981; font-family: 'Courier New', monospace; font-size: 0.7rem;">${mantissaBits}</span>
+  </div>`;
+
+  // Final IEEE 754 representation
+  const ieee754 = signBit + exponentBits + mantissaBits;
+  displayDoubleResult(ieee754, decimal.toString(), resultDiv, stepsDiv, stepsHTML);
+}
+
+// Convert IEEE 754 Double Precision to Decimal
+function convertDoubleToDecimal(binary, resultDiv, stepsDiv) {
+  if (!/^[01]{64}$/.test(binary)) {
+    throw new Error('Binary must be exactly 64 bits (0s and 1s)');
+  }
+
+  let stepsHTML = '<h4 style="color: #6366f1; font-size: 0.9rem;">Conversion Steps:</h4>';
+  
+  // Extract components
+  const signBit = binary[0];
+  const exponentBits = binary.substring(1, 12);
+  const mantissaBits = binary.substring(12, 64);
+  
+  stepsHTML += `<div style="background: #f3f4f6; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 1: Extract Bits</strong><br/>
+    Sign: <span style="color: #ef4444;">${signBit}</span> | 
+    Exponent (11): <span style="color: #3b82f6; font-family: 'Courier New', monospace;">${exponentBits}</span><br/>
+    Mantissa (52): <span style="color: #10b981; font-family: 'Courier New', monospace; font-size: 0.7rem;">${mantissaBits}</span>
+  </div>`;
+
+  const exponentValue = parseInt(exponentBits, 2);
+  
+  // Check special cases
+  if (exponentValue === 2047) {
+    const isZeroMantissa = /^0+$/.test(mantissaBits);
+    if (isZeroMantissa) {
+      const result = signBit === '0' ? '+Infinity' : '-Infinity';
+      displayDoubleResult(binary, result, resultDiv, stepsDiv, stepsHTML + 
+        `<div style="background: #fef3c7; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+          <strong>Infinity Detected</strong>
+        </div>`);
+    } else {
+      displayDoubleResult(binary, 'NaN', resultDiv, stepsDiv, stepsHTML + 
+        `<div style="background: #fee2e2; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+          <strong>NaN Detected</strong>
+        </div>`);
+    }
+    return;
+  }
+
+  if (exponentValue === 0 && /^0+$/.test(mantissaBits)) {
+    displayDoubleResult(binary, signBit === '0' ? '+0' : '-0', resultDiv, stepsDiv, stepsHTML + 
+      `<div style="background: #f0f9ff; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+        <strong>Zero Detected</strong>
+      </div>`);
+    return;
+  }
+
+  // Calculate actual exponent
+  const actualExponent = exponentValue - 1023;
+  stepsHTML += `<div style="background: #dbeafe; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 2: Exponent</strong><br/>
+    ${exponentValue} - Bias(1023) = ${actualExponent}
+  </div>`;
+
+  // Calculate mantissa value
+  let mantissaValue = 1.0;
+  for (let i = 0; i < mantissaBits.length; i++) {
+    if (mantissaBits[i] === '1') {
+      mantissaValue += Math.pow(2, -(i + 1));
+    }
+  }
+  
+  stepsHTML += `<div style="background: #d1fae5; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 3: Mantissa</strong> = ${mantissaValue.toFixed(15)}
+  </div>`;
+
+  // Calculate final value
+  const decimalValue = (signBit === '1' ? -1 : 1) * mantissaValue * Math.pow(2, actualExponent);
+  
+  stepsHTML += `<div style="background: #f3f4f6; padding: 0.6rem; border-radius: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;">
+    <strong>Step 4: Result</strong> = ${signBit === '1' ? '-' : '+'}${mantissaValue.toFixed(10)} × 2<sup>${actualExponent}</sup> = <strong>${decimalValue}</strong>
+  </div>`;
+
+  displayDoubleResult(binary, decimalValue.toString(), resultDiv, stepsDiv, stepsHTML);
+}
+
+// Display Double Precision Result
+function displayDoubleResult(ieee754, decimal, resultDiv, stepsDiv, stepsHTML) {
+  const signBit = ieee754[0];
+  const exponentBits = ieee754.substring(1, 12);
+  const mantissaBits = ieee754.substring(12, 64);
+  
+  // Calculate hex representation
+  const hex = BigInt('0b' + ieee754).toString(16).toUpperCase().padStart(16, '0');
+  
+  resultDiv.innerHTML = `
+    <h4 style="color: #6366f1; font-size: 0.9rem; margin-bottom: 0.5rem;">Result:</h4>
+    <div style="background: #f9fafb; padding: 0.8rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; margin-bottom: 0.5rem;">
+      <div style="font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Decimal:</strong> <span style="color: #059669; font-weight: 700;">${decimal}</span></div>
+      <div style="font-size: 0.7rem; margin-bottom: 0.5rem; word-break: break-all; font-family: 'Courier New', monospace;">
+        <strong>IEEE 754:</strong><br/>
+        <span style="color: #ef4444; font-weight: 700;">${signBit}</span>
+        <span style="color: #3b82f6; font-weight: 700;">${exponentBits}</span>
+        <span style="color: #10b981; font-weight: 700;">${mantissaBits}</span>
+      </div>
+      <div style="font-size: 0.75rem; font-family: 'Courier New', monospace;">
+        <strong>Hexadecimal:</strong> <span style="color: #7c3aed; font-weight: 700;">0x${hex}</span>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; font-size: 0.75rem;">
+      <div style="background: #fef2f2; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #ef4444; font-weight: 700;">Sign</div>
+        <div style="font-family: 'Courier New', monospace;">${signBit}</div>
+      </div>
+      <div style="background: #eff6ff; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #3b82f6; font-weight: 700;">Exponent (11)</div>
+        <div style="font-family: 'Courier New', monospace;">${exponentBits}</div>
+      </div>
+      <div style="background: #f0fdf4; padding: 0.4rem; border-radius: 0.4rem; text-align: center;">
+        <div style="color: #10b981; font-weight: 700;">Mantissa (52)</div>
+        <div style="font-family: 'Courier New', monospace; font-size: 0.65rem;">${mantissaBits.substring(0, 26)}<br/>${mantissaBits.substring(26)}</div>
+      </div>
+    </div>`;
+  
+  resultDiv.style.display = 'block';
+  stepsDiv.innerHTML = stepsHTML;
+  stepsDiv.style.display = 'block';
+}
+
+// ============================================
+// BOOTH'S MULTIPLICATION ALGORITHM
+// ============================================
+
+let boothState = {
+  M: 0,           // Multiplicand
+  Q: 0,           // Multiplier
+  A: 0,           // Accumulator
+  Q1: 0,          // Q-1 bit
+  bitWidth: 8,    // Bit width
+  steps: [],      // History of all steps
+  currentStep: 0, // Current step index
+  complete: false, // Whether calculation is complete
+  navigationMode: false, // Whether in step-by-step navigation mode
+  viewStep: 0     // Current step being viewed in navigation
+};
+
+// Convert number to signed binary representation
+function toSignedBinary(num, bits) {
+  if (num >= 0) {
+    return num.toString(2).padStart(bits, '0');
+  } else {
+    // Two's complement for negative numbers
+    const positive = Math.abs(num);
+    const binary = positive.toString(2).padStart(bits, '0');
+    let inverted = '';
+    for (let i = 0; i < binary.length; i++) {
+      inverted += binary[i] === '0' ? '1' : '0';
+    }
+    let result = parseInt(inverted, 2) + 1;
+    return result.toString(2).padStart(bits, '0');
+  }
+}
+
+// Convert signed binary to decimal
+function fromSignedBinary(binary) {
+  if (binary[0] === '0') {
+    return parseInt(binary, 2);
+  } else {
+    // Negative number in two's complement
+    let inverted = '';
+    for (let i = 0; i < binary.length; i++) {
+      inverted += binary[i] === '0' ? '1' : '0';
+    }
+    return -(parseInt(inverted, 2) + 1);
+  }
+}
+
+// Arithmetic right shift (preserves sign bit)
+function arithmeticRightShift(a, q, q1, bits) {
+  const signBit = a[0];
+  const newQ1 = q[q.length - 1];
+  const newQ = a[a.length - 1] + q.substring(0, q.length - 1);
+  const newA = signBit + a.substring(0, a.length - 1);
+  return { a: newA, q: newQ, q1: newQ1 };
+}
+
+// Add two binary numbers
+function addBinary(a, b, bits) {
+  const aNum = fromSignedBinary(a);
+  const bNum = fromSignedBinary(b);
+  const sum = aNum + bNum;
+  return toSignedBinary(sum, bits);
+}
+
+// Subtract two binary numbers
+function subtractBinary(a, b, bits) {
+  const aNum = fromSignedBinary(a);
+  const bNum = fromSignedBinary(b);
+  const diff = aNum - bNum;
+  return toSignedBinary(diff, bits);
+}
+
+// Initialize Booth's algorithm
+function initializeBooths(multiplicand, multiplier, bitWidth) {
+  boothState.M = parseInt(multiplicand);
+  boothState.Q = parseInt(multiplier);
+  boothState.bitWidth = bitWidth;
+  boothState.A = 0;
+  boothState.Q1 = 0;
+  boothState.currentStep = 0;
+  boothState.complete = false;
+  boothState.steps = [];
+
+  const mBinary = toSignedBinary(boothState.M, bitWidth);
+  const qBinary = toSignedBinary(boothState.Q, bitWidth);
+  const aBinary = toSignedBinary(boothState.A, bitWidth);
+
+  // Initial state
+  boothState.steps.push({
+    step: 0,
+    bits: qBinary[bitWidth - 1] + '0',
+    operation: 'Initialize',
+    A: aBinary,
+    Q: qBinary,
+    Q1: '0',
+    explanation: `Initialize: A = ${'0'.repeat(bitWidth)}, Q = ${qBinary}, Q-1 = 0, M = ${mBinary}`
+  });
+
+  return true;
+}
+
+// Execute one step of Booth's algorithm
+function executeBoothStep() {
+  if (boothState.complete || boothState.currentStep >= boothState.bitWidth) {
+    boothState.complete = true;
+    return false;
+  }
+
+  const bits = boothState.bitWidth;
+  const lastStep = boothState.steps[boothState.steps.length - 1];
+  
+  let A = lastStep.A;
+  let Q = lastStep.Q;
+  let Q1 = lastStep.Q1;
+  const M = toSignedBinary(boothState.M, bits);
+
+  const q0 = Q[bits - 1];
+  const q_1 = Q1;
+  const bitPair = q0 + q_1;
+
+  let operation = '';
+  let explanation = '';
+
+  // Determine operation based on Q0 and Q-1
+  if (bitPair === '10') {
+    // Subtract M from A
+    A = subtractBinary(A, M, bits);
+    operation = 'A = A - M';
+    explanation = `Q Q-1 = 10 → Subtract M from A: ${lastStep.A} - ${M} = ${A}`;
+  } else if (bitPair === '01') {
+    // Add M to A
+    A = addBinary(A, M, bits);
+    operation = 'A = A + M';
+    explanation = `Q Q-1 = 01 → Add M to A: ${lastStep.A} + ${M} = ${A}`;
+  } else {
+    // No operation
+    operation = 'No Operation';
+    explanation = `Q Q-1 = ${bitPair} → No arithmetic operation needed`;
+  }
+
+  // Arithmetic right shift
+  const shifted = arithmeticRightShift(A, Q, Q1, bits);
+  A = shifted.a;
+  Q = shifted.q;
+  Q1 = shifted.q1;
+
+  explanation += ` → Shift right: A Q Q-1 = ${A} ${Q} ${Q1}`;
+
+  boothState.currentStep++;
+  boothState.steps.push({
+    step: boothState.currentStep,
+    bits: bitPair,
+    operation: operation,
+    A: A,
+    Q: Q,
+    Q1: Q1,
+    explanation: explanation
+  });
+
+  if (boothState.currentStep >= bits) {
+    boothState.complete = true;
+  }
+
+  return true;
+}
+
+// Calculate Booth's algorithm (show overview - all steps at once)
+function calculateBooths() {
+  const multiplicand = document.getElementById('boothMultiplicand').value.trim();
+  const multiplier = document.getElementById('boothMultiplier').value.trim();
+  const bitWidth = parseInt(document.getElementById('boothBitWidth').value);
+
+  if (!multiplicand || !multiplier) {
+    alert('Please enter both multiplicand and multiplier');
+    return;
+  }
+
+  const m = parseInt(multiplicand);
+  const q = parseInt(multiplier);
+
+  if (isNaN(m) || isNaN(q)) {
+    alert('Please enter valid numbers');
+    return;
+  }
+
+  // Check if numbers fit in bit width
+  const maxValue = Math.pow(2, bitWidth - 1) - 1;
+  const minValue = -Math.pow(2, bitWidth - 1);
+
+  if (m > maxValue || m < minValue || q > maxValue || q < minValue) {
+    alert(`Numbers must be between ${minValue} and ${maxValue} for ${bitWidth}-bit representation`);
+    return;
+  }
+
+  // Initialize
+  initializeBooths(multiplicand, multiplier, bitWidth);
+
+  // Execute all steps
+  while (!boothState.complete) {
+    executeBoothStep();
+  }
+
+  // Show overview with last step
+  boothState.navigationMode = false;
+  boothState.viewStep = boothState.steps.length - 1;
+  displayBoothResults();
+  
+  // Show navigate button
+  document.getElementById('navigateStepsBtn').style.display = 'flex';
+  document.getElementById('stepNavControls').style.display = 'none';
+}
+
+// Start navigating through steps one by one
+function navigateSteps() {
+  if (boothState.steps.length === 0) {
+    alert('Please calculate first!');
+    return;
+  }
+  
+  boothState.navigationMode = true;
+  boothState.viewStep = 0;
+  
+  // Show navigation controls
+  document.getElementById('stepNavControls').style.display = 'block';
+  document.getElementById('navigateStepsBtn').style.display = 'none';
+  
+  // Update UI
+  displayBoothResults();
+  
+  // Smooth scroll to show navigation controls at top of screen
+  setTimeout(() => {
+    const navControls = document.getElementById('stepNavControls');
+    if (navControls) {
+      navControls.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+}
+
+// Go to next step in navigation
+function nextStep() {
+  if (boothState.viewStep < boothState.steps.length - 1) {
+    boothState.viewStep++;
+    addStepTransitionEffect();
+    displayBoothResults();
+  }
+}
+
+// Go to previous step in navigation
+function previousStep() {
+  if (boothState.viewStep > 0) {
+    boothState.viewStep--;
+    addStepTransitionEffect();
+    displayBoothResults();
+  }
+}
+
+// Add visual effect when changing steps
+function addStepTransitionEffect() {
+  // Pulse effect on registers
+  const registerCards = ['registerACard', 'registerQCard', 'registerQ1Card', 'registerMCard'];
+  registerCards.forEach(id => {
+    const card = document.getElementById(id);
+    if (card) {
+      card.classList.add('register-highlight');
+      setTimeout(() => {
+        card.classList.remove('register-highlight');
+      }, 2000);
+    }
+  });
+  
+  // Flash effect on step info
+  const stepInfo = document.getElementById('boothStepInfo');
+  if (stepInfo) {
+    stepInfo.style.animation = 'none';
+    setTimeout(() => {
+      stepInfo.style.animation = 'slideInUp 0.5s ease-out';
+    }, 10);
+  }
+}
+
+// Update register with color-coded binary digits
+function updateRegisterWithAnimation(elementId, binaryValue) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+  
+  // Split binary into individual bits with color coding
+  const bits = binaryValue.split('');
+  let coloredHTML = '';
+  bits.forEach((bit, index) => {
+    const color = bit === '1' ? '#059669' : '#6366f1';
+    const opacity = bit === '1' ? '1' : '0.6';
+    coloredHTML += `<span style="color: ${color}; opacity: ${opacity}; transition: all 0.3s;">${bit}</span>`;
+  });
+  
+  element.innerHTML = coloredHTML;
+}
+
+// Format explanation with highlighting
+function formatExplanation(text) {
+  // Highlight binary numbers
+  text = text.replace(/([01]{4,})/g, '<span style="background: #dbeafe; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-family: \'Courier New\', monospace; font-weight: 700; color: #1e40af;">$1</span>');
+  
+  // Highlight operations
+  text = text.replace(/(Add|Subtract|Shift right|Initialize)/g, '<span style="color: #8b5cf6; font-weight: 700;">$1</span>');
+  
+  // Highlight register names
+  text = text.replace(/\b([AQM])\b/g, '<span style="background: #fef3c7; padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-weight: 700; color: #92400e;">$1</span>');
+  
+  // Highlight Q Q-1 patterns
+  text = text.replace(/(Q Q-1 = [01]{2})/g, '<span style="background: #6366f1; color: white; padding: 0.2rem 0.5rem; border-radius: 0.375rem; font-weight: 700;">$1</span>');
+  
+  return text;
+}
+
+// Display Booth's algorithm results
+function displayBoothResults() {
+  const resultDiv = document.getElementById('boothResult');
+  const registersDiv = document.getElementById('boothRegisters');
+  const stepInfoDiv = document.getElementById('boothStepInfo');
+  const historyDiv = document.getElementById('boothHistory');
+  const tableBody = document.getElementById('boothTableBody');
+
+  // Show sections
+  registersDiv.style.display = 'block';
+  stepInfoDiv.style.display = 'block';
+  historyDiv.style.display = 'block';
+
+  // Determine which step to show
+  const stepIndex = boothState.navigationMode ? boothState.viewStep : boothState.steps.length - 1;
+  const currentState = boothState.steps[stepIndex];
+  const bits = boothState.bitWidth;
+
+  // Update navigation controls if in navigation mode
+  if (boothState.navigationMode) {
+    document.getElementById('navCurrentStep').textContent = boothState.viewStep;
+    document.getElementById('navTotalSteps').textContent = boothState.steps.length - 1;
+    
+    // Update progress bar
+    const progress = (boothState.viewStep / (boothState.steps.length - 1)) * 100;
+    document.getElementById('progressBar').style.width = progress + '%';
+    
+    // Enable/disable buttons
+    document.getElementById('prevBtn').disabled = boothState.viewStep === 0;
+    document.getElementById('nextBtn').disabled = boothState.viewStep === boothState.steps.length - 1;
+    
+    document.getElementById('prevBtn').style.opacity = boothState.viewStep === 0 ? '0.5' : '1';
+    document.getElementById('nextBtn').style.opacity = boothState.viewStep === boothState.steps.length - 1 ? '0.5' : '1';
+  }
+
+  // Update registers with visual formatting
+  updateRegisterWithAnimation('registerA', currentState.A);
+  updateRegisterWithAnimation('registerQ', currentState.Q);
+  updateRegisterWithAnimation('registerQ1', currentState.Q1);
+  updateRegisterWithAnimation('registerM', toSignedBinary(boothState.M, bits));
+
+  // Update step info with enhanced formatting
+  document.getElementById('currentStepNum').textContent = currentState.step;
+  document.getElementById('currentBits').textContent = currentState.bits || '--';
+  
+  // Color code operation
+  const opElement = document.getElementById('currentOperation');
+  opElement.textContent = currentState.operation;
+  if (currentState.operation.includes('Add')) {
+    opElement.style.color = '#10b981';
+  } else if (currentState.operation.includes('Subtract')) {
+    opElement.style.color = '#ef4444';
+  } else {
+    opElement.style.color = '#6366f1';
+  }
+  
+  // Enhanced explanation with formatting
+  const explanation = currentState.explanation;
+  document.getElementById('stepExplanation').innerHTML = formatExplanation(explanation);
+
+  // Update history table (only show steps up to current in navigation mode)
+  tableBody.innerHTML = '';
+  const stepsToShow = boothState.navigationMode ? 
+    boothState.steps.slice(0, stepIndex + 1) : 
+    boothState.steps;
+  
+  stepsToShow.forEach(step => {
+    const row = document.createElement('tr');
+    const isCurrentStep = step.step === currentState.step;
+    
+    // Enhanced styling for current step
+    if (isCurrentStep) {
+      row.style.background = 'linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%)';
+      row.style.transform = 'scale(1.02)';
+      row.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+      row.style.borderLeft = '4px solid #3b82f6';
+    } else {
+      row.style.background = 'white';
+    }
+    
+    row.style.transition = 'all 0.3s ease';
+    row.style.cursor = 'pointer';
+    
+    // Color code operation
+    let operationColor = '#374151';
+    let operationBg = 'transparent';
+    if (step.operation.includes('Add')) {
+      operationColor = '#10b981';
+      operationBg = isCurrentStep ? '#d1fae5' : 'transparent';
+    } else if (step.operation.includes('Subtract')) {
+      operationColor = '#ef4444';
+      operationBg = isCurrentStep ? '#fee2e2' : 'transparent';
+    } else if (step.operation.includes('Initialize')) {
+      operationColor = '#6366f1';
+      operationBg = isCurrentStep ? '#e0e7ff' : 'transparent';
+    }
+    
+    row.innerHTML = `
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; font-weight: ${isCurrentStep ? '800' : '600'}; font-size: ${isCurrentStep ? '1.05rem' : '0.9rem'}; color: ${isCurrentStep ? '#3b82f6' : '#374151'}; font-family: 'Poppins', sans-serif;">${step.step}</td>
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; font-weight: 800; color: #3b82f6; font-size: ${isCurrentStep ? '1.2rem' : '0.95rem'}; font-family: 'Courier New', monospace; background: ${isCurrentStep ? '#eff6ff' : 'white'};">${step.bits || '--'}</td>
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; font-weight: ${isCurrentStep ? '700' : '600'}; color: ${operationColor}; background: ${operationBg}; font-size: ${isCurrentStep ? '0.95rem' : '0.85rem'}; font-family: 'Poppins', sans-serif;">${step.operation}</td>
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; color: #f59e0b; font-family: 'Courier New', monospace; font-size: ${isCurrentStep ? '0.95rem' : '0.85rem'}; font-weight: ${isCurrentStep ? '700' : '600'};">${step.A}</td>
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; color: #3b82f6; font-family: 'Courier New', monospace; font-size: ${isCurrentStep ? '0.95rem' : '0.85rem'}; font-weight: ${isCurrentStep ? '700' : '600'};">${step.Q}</td>
+      <td style="padding: 0.75rem; border: 1px solid #e5e7eb; text-align: center; color: #ec4899; font-family: 'Courier New', monospace; font-size: ${isCurrentStep ? '0.95rem' : '0.85rem'}; font-weight: ${isCurrentStep ? '700' : '600'};">${step.Q1}</td>
+    `;
+    
+    // Add hover effect
+    row.addEventListener('mouseenter', function() {
+      if (!isCurrentStep) {
+        this.style.background = '#f9fafb';
+        this.style.transform = 'scale(1.01)';
+      }
+    });
+    
+    row.addEventListener('mouseleave', function() {
+      if (!isCurrentStep) {
+        this.style.background = 'white';
+        this.style.transform = 'scale(1)';
+      }
+    });
+    
+    tableBody.appendChild(row);
+  });
+
+  // Show final result if at last step
+  const isLastStep = stepIndex === boothState.steps.length - 1;
+  if (boothState.complete && isLastStep) {
+    const finalA = currentState.A;
+    const finalQ = currentState.Q;
+    const combinedBinary = finalA + finalQ;
+    const result = fromSignedBinary(combinedBinary);
+    const expected = boothState.M * boothState.Q;
+
+    resultDiv.style.display = 'block';
+    document.getElementById('boothFinalResult').innerHTML = `
+      <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">
+        ${boothState.M} × ${boothState.Q} = <span style="color: #047857; font-size: 1.5rem; font-weight: 700;">${result}</span>
+      </div>
+      <div style="font-size: 0.9rem; color: #059669; margin-bottom: 0.25rem;">
+        Binary: <span style="font-family: 'Courier New', monospace; font-weight: 600;">${combinedBinary}</span>
+      </div>
+      <div style="font-size: 0.85rem; color: #047857;">
+        (A: ${finalA} | Q: ${finalQ})
+      </div>
+      <div style="font-size: 0.9rem; color: ${result === expected ? '#10b981' : '#ef4444'}; margin-top: 0.5rem; font-weight: 600;">
+        ${result === expected ? '✅ Correct!' : '⚠️ Verification: ' + expected}
+      </div>
+    `;
+  } else {
+    resultDiv.style.display = 'none';
+  }
+}
+
+// Reset Booth's algorithm
+function resetBooths() {
+  boothState = {
+    M: 0,
+    Q: 0,
+    A: 0,
+    Q1: 0,
+    bitWidth: 8,
+    steps: [],
+    currentStep: 0,
+    complete: false,
+    navigationMode: false,
+    viewStep: 0
+  };
+
+  document.getElementById('boothResult').style.display = 'none';
+  document.getElementById('boothRegisters').style.display = 'none';
+  document.getElementById('boothStepInfo').style.display = 'none';
+  document.getElementById('boothHistory').style.display = 'none';
+  document.getElementById('stepNavControls').style.display = 'none';
+  document.getElementById('navigateStepsBtn').style.display = 'none';
+  document.getElementById('boothMultiplicand').value = '';
+  document.getElementById('boothMultiplier').value = '';
+}
+
+// =============================================================================
+// STACK ANIMATION MODULE
+// =============================================================================
+
+// Stack Animation State
+let stackAnimationState = {
+  enabled: true,            // Animation mode on/off (enabled by default)
+  animationQueue: [],       // Queue of operations to animate
+  isAnimating: false,       // Currently animating
+  isPaused: false,          // Animation paused
+  speed: 1,                 // Animation speed multiplier
+  visualStack: [],          // Visual representation of stack
+  totalOps: 0,              // Total operations count
+  pushCount: 0,             // PUSH operations count
+  popCount: 0,              // POP operations count
+  currentOperation: null    // Current operation being animated
+};
+
+// Initialize Stack Animation
+function initStackAnimation() {
+  console.log('Stack Animation initialized');
+  // Reset state
+  stackAnimationState.visualStack = [];
+  stackAnimationState.animationQueue = [];
+  stackAnimationState.totalOps = 0;
+  stackAnimationState.pushCount = 0;
+  stackAnimationState.popCount = 0;
+  stackAnimationState.currentOperation = null;
+  updateAnimationInfo();
+}
+
+// Sync visual stack with actual stack
+function syncVisualStack() {
+  stackAnimationState.visualStack = [...stackMemory];
+  renderStackVisual();
+}
+
+// Render Stack Visual
+function renderStackVisual() {
+  const container = document.getElementById('stackVisualContainer');
+  
+  if (stackAnimationState.visualStack.length === 0) {
+    container.innerHTML = `
+      <div class="stack-empty-state">
+        <span class="empty-icon">📭</span>
+        <p>Stack is empty. Perform PUSH operations to see animation.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  let html = '';
+  const currentSP = MAX_STACK_SIZE - stackAnimationState.visualStack.length;
+  
+  // Render each stack element (from top to bottom)
+  for (let i = stackAnimationState.visualStack.length - 1; i >= 0; i--) {
+    const memoryAddr = MAX_STACK_SIZE - i - 1;
+    const value = stackAnimationState.visualStack[i];
+    const isTopOfStack = (i === stackAnimationState.visualStack.length - 1);
+    
+    html += `
+      <div class="stack-block ${isTopOfStack ? 'active' : ''}" data-index="${i}">
+        <div class="memory-addr">FFF${(0xF - memoryAddr).toString(16).toUpperCase()}H</div>
+        <div class="stack-data">${value}</div>
+        <div class="sp-indicator ${isTopOfStack ? 'active' : ''}">${isTopOfStack ? 'SP ➜' : ''}</div>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+  updateAnimationInfo();
+}
+
+// Queue Animation Operation
+function queueAnimation(type, data) {
+  stackAnimationState.animationQueue.push({ type, data });
+  updateQueueDisplay();
+  
+  // Start processing queue if not already animating
+  if (!stackAnimationState.isAnimating && !stackAnimationState.isPaused) {
+    processAnimationQueue();
+  }
+}
+
+// Process Animation Queue
+async function processAnimationQueue() {
+  if (stackAnimationState.animationQueue.length === 0) {
+    stackAnimationState.isAnimating = false;
+    stackAnimationState.currentOperation = null;
+    updateQueueDisplay();
+    return;
+  }
+  
+  if (stackAnimationState.isPaused) {
+    return;
+  }
+  
+  stackAnimationState.isAnimating = true;
+  const operation = stackAnimationState.animationQueue.shift();
+  stackAnimationState.currentOperation = operation.type;
+  updateQueueDisplay();
+  
+  // Execute animation based on type
+  if (operation.type === 'PUSH') {
+    await animatePush(operation.data);
+  } else if (operation.type === 'POP') {
+    await animatePop();
+  }
+  
+  stackAnimationState.totalOps++;
+  updateAnimationInfo();
+  
+  // Continue processing queue
+  setTimeout(() => processAnimationQueue(), 100);
+}
+
+// Animate PUSH Operation
+async function animatePush(value) {
+  const baseDuration = 500 / stackAnimationState.speed;
+  
+  // Update counts
+  stackAnimationState.pushCount++;
+  
+  // Add to visual stack
+  stackAnimationState.visualStack.push(value);
+  
+  // Render with animation
+  renderStackVisual();
+  
+  // Highlight new element
+  await sleep(baseDuration * 0.1);
+  const blocks = document.querySelectorAll('.stack-block');
+  if (blocks.length > 0) {
+    const topBlock = blocks[0];
+    const dataEl = topBlock.querySelector('.stack-data');
+    dataEl.classList.add('push-anim');
+    
+    // Wait for animation to complete
+    await sleep(baseDuration * 0.9);
+    dataEl.classList.remove('push-anim');
+  }
+}
+
+// Animate POP Operation
+async function animatePop() {
+  const baseDuration = 500 / stackAnimationState.speed;
+  
+  if (stackAnimationState.visualStack.length === 0) {
+    return;
+  }
+  
+  // Update counts
+  stackAnimationState.popCount++;
+  
+  // Highlight element being popped
+  const blocks = document.querySelectorAll('.stack-block');
+  if (blocks.length > 0) {
+    const topBlock = blocks[0];
+    const dataEl = topBlock.querySelector('.stack-data');
+    dataEl.classList.add('pop-anim');
+    
+    // Wait for animation
+    await sleep(baseDuration);
+  }
+  
+  // Remove from visual stack
+  stackAnimationState.visualStack.pop();
+  
+  // Re-render
+  renderStackVisual();
+}
+
+// Update Animation Info Panel
+function updateAnimationInfo() {
+  document.getElementById('animTotalOps').textContent = stackAnimationState.totalOps;
+  document.getElementById('animPushCount').textContent = stackAnimationState.pushCount;
+  document.getElementById('animPopCount').textContent = stackAnimationState.popCount;
+  document.getElementById('animStackHeight').textContent = stackAnimationState.visualStack.length;
+}
+
+// Update Queue Display
+function updateQueueDisplay() {
+  document.getElementById('queueCount').textContent = stackAnimationState.animationQueue.length;
+  document.getElementById('currentOperation').textContent = stackAnimationState.currentOperation || 'None';
+}
+
+// Play Animation
+function playAnimation() {
+  if (stackAnimationState.animationQueue.length === 0) {
+    return;
+  }
+  
+  stackAnimationState.isPaused = false;
+  document.getElementById('playBtn').style.display = 'none';
+  document.getElementById('pauseBtn').style.display = 'inline-flex';
+  
+  processAnimationQueue();
+}
+
+// Pause Animation
+function pauseAnimation() {
+  stackAnimationState.isPaused = true;
+  document.getElementById('playBtn').style.display = 'inline-flex';
+  document.getElementById('pauseBtn').style.display = 'none';
+}
+
+// Step Forward (manual step)
+function stepForward() {
+  if (stackAnimationState.animationQueue.length === 0) {
+    return;
+  }
+  
+  stackAnimationState.isPaused = true;
+  processAnimationQueue();
+}
+
+// Reset Animation
+function resetAnimation() {
+  // Clear queue
+  stackAnimationState.animationQueue = [];
+  stackAnimationState.isAnimating = false;
+  stackAnimationState.isPaused = false;
+  stackAnimationState.currentOperation = null;
+  
+  // Reset buttons
+  document.getElementById('playBtn').style.display = 'inline-flex';
+  document.getElementById('pauseBtn').style.display = 'none';
+  
+  // Sync with actual stack
+  syncVisualStack();
+  updateQueueDisplay();
+}
+
+// Change Animation Speed
+function changeAnimationSpeed(speed) {
+  stackAnimationState.speed = parseFloat(speed);
+}
+
+// Helper: Sleep function
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Make functions globally accessible
+window.playAnimation = playAnimation;
+window.pauseAnimation = pauseAnimation;
+window.stepForward = stepForward;
+window.resetAnimation = resetAnimation;
+window.changeAnimationSpeed = changeAnimationSpeed;

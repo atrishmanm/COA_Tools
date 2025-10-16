@@ -1031,6 +1031,17 @@ input, select {
 }
 
 /* ========================================
+   IEEE 754 FLOATING-POINT SECTION
+   ======================================== */
+
+/* Responsive for IEEE 754 2-column grid - matches code converters pattern */
+@media (max-width: 900px) {
+  #ieee754 > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ========================================
    MEMORY VIEWER SECTION
    ======================================== */
 

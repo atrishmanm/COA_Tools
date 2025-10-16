@@ -25,15 +25,19 @@ A comprehensive, open-source web-based toolkit for computer science students, ed
 
 ## 🌟 Features
 
-### �️ 8086 Stack Calculator ⭐ **NEW**
+### 🖥️ 8086 Stack Calculator ⭐ **NEW**
 - **Authentic 8086 Processor Simulation**: Real microprocessor architecture emulation
 - **Stack-Based Operations**: PUSH, POP, PEEK operations with 50-element stack capacity
+- **Real-Time Stack Animation** 🎬: Visual PUSH/POP animations with smooth transitions
+- **Animation Controls**: Play, Pause, Step Forward, Reset, and Speed Control (0.5x - 2x)
+- **Queue Management**: Sequential animation processing with live queue display
 - **Register Management**: Live AX, BX, CX, DX, and SP register displays
 - **Arithmetic Operations**: Addition, Subtraction, Multiplication, Division, and Modulo
 - **Operation History**: Real-time tracking of all processor operations
 - **Interactive Keypad**: Professional calculator interface with backspace functionality
 - **Error Handling**: Stack overflow/underflow protection with user alerts
 - **Step-by-Step Guide**: Horizontal instruction cards for easy learning
+- **Visual Effects**: Color-coded operations (green for PUSH, red for POP), pulse animations
 
 ### �📊 Number System Converter
 - Convert between any number bases (2-36)
@@ -58,6 +62,39 @@ A comprehensive, open-source web-based toolkit for computer science students, ed
 
 ### What Makes It Special
 The 8086 Stack Calculator is a faithful simulation of the Intel 8086 microprocessor's stack-based arithmetic operations. Unlike traditional calculators, this tool operates exactly like the real 8086 processor, making it an invaluable educational resource for understanding microprocessor architecture.
+
+### 🎬 Stack Animation Feature ⭐ **NEW**
+Experience stack operations come to life with real-time animations!
+
+#### Visual Animation System
+- **Live Stack Visualization**: See your stack elements with memory addresses (FFFFH - FFF0H)
+- **Smooth PUSH Animations**: Watch data blocks slide in from top with green highlight
+- **Smooth POP Animations**: See elements fade out with red highlight effect
+- **SP Pointer Tracking**: Yellow indicator shows current Stack Pointer position
+- **Color-Coded Operations**: Green for PUSH, Red for POP, Yellow for SP
+
+#### Animation Controls
+- **🎬 Show/Hide Animation**: Toggle button in header to access animation mode
+- **🎥 Enable Animation Mode**: Activate to queue operations for animation
+- **▶️ Play**: Auto-play queued animations sequentially
+- **⏸️ Pause**: Pause animation processing mid-queue
+- **⏭️ Step Forward**: Manually step through animations one at a time
+- **🔄 Reset**: Clear queue and sync with actual stack
+- **Speed Control**: Adjust animation speed (0.5x, 1x, 2x multipliers)
+
+#### Information Panel
+- **Total Operations**: Count of all PUSH and POP operations
+- **PUSH Count**: Number of PUSH operations performed
+- **POP Count**: Number of POP operations performed
+- **Stack Height**: Current number of elements in visual stack
+- **Queue Display**: Shows pending operations and current animation
+
+#### Educational Benefits
+- **Visual Learning**: See exactly how stack grows and shrinks
+- **Memory Layout**: Understand memory addressing and SP movement
+- **Operation Sequence**: Follow step-by-step execution flow
+- **Performance Analysis**: Track operation counts and patterns
+- **LIFO Principle**: Observe Last-In-First-Out behavior visually
 
 ### Key Components
 
